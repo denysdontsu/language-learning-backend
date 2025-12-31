@@ -1,0 +1,424 @@
+from datetime import datetime
+from typing import Self
+
+from pydantic import BaseModel, Field, model_validator, ConfigDict, computed_field
+
+from app.schemas.enums import ExerciseTypeEnum, LanguageLevelEnum, LanguageEnum
+from app.schemas.common import Options
+from app.utils.validators import validate_question_translation_pair, validate_exercise_options, validate_translation_usage
+
+
+class ExerciseBase(BaseModel):
+    """"Base exercise fields."""
+    topic: str = Field(min_length=1, max_length=100)
+    difficult_level: LanguageLevelEnum
+    type: ExerciseTypeEnum
+
+
+class ExerciseCreate(ExerciseBase):
+    """Schema for creating a new exercise (for admin)."""
+    # Question
+    question_text: str = Field(min_length=1)
+    question_language: LanguageEnum
+
+    # Answer
+    correct_answer: str = Field(min_length=1)
+    answer_language: LanguageEnum
+
+    # Translation (optional)
+    question_translation: str | None = Field(None, min_length=1)
+    question_translation_language: LanguageEnum | None = None
+
+    # Options (for type: 'multiple_choice')
+    options: Options | None = None
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            'examples': [
+                # Example 1: Sentence translation
+                {
+                    'topic': 'Present Perfect',
+                    'difficult_level': 'B1',
+                    'type': 'sentence_translation',
+                    'options': None,
+                    'question_text': 'I have lived here for 5 years',
+                    'question_language': 'en',
+                    'correct_answer': 'Я живу тут 5 років',
+                    'answer_language': 'uk',
+                    'question_translation': None,
+                    'question_translation_language': None
+                },
+                # Example 2: Multiple choice
+                {
+                    'topic': 'Past Simple Verbs',
+                    'difficult_level': 'A2',
+                    'type': 'multiple_choice',
+                    'options': {
+                        'A': 'go',
+                        'B': 'went',
+                        'C': 'gone',
+                        'D': 'going'
+                    },
+                    'question_text': 'Yesterday I ___ to the store',
+                    'question_language': 'en',
+                    'correct_answer': 'went',
+                    'answer_language': 'en',
+                    'question_translation': 'Вчора я cходив до магазину',
+                    'question_translation_language': 'uk'
+                },
+                # Example 3: Fill in the blank
+                {
+                    'topic': 'Articles',
+                    'difficult_level': 'A1',
+                    'type': 'fill_blank',
+                    'options': None,
+                    'question_text': 'I have ___ apple',
+                    'question_language': 'en',
+                    'correct_answer': 'an',
+                    'answer_language': 'en',
+                    'question_translation': 'У мене є яблуко',
+                    'question_translation_language': 'uk'
+                }
+            ]
+        }
+    )
+
+    @model_validator(mode='after')
+    def validate_exercise(self) -> Self:
+        """Validate exercise business rules."""
+        # Validate options
+        validate_exercise_options(self.type, self.options)
+
+        # Validate translations
+        validate_question_translation_pair(self.question_translation,
+                                self.question_translation_language)
+
+        # Validate translation usage
+        validate_translation_usage(self.type,
+                                   self.question_translation)
+        return self
+
+
+class ExerciseUpdate(BaseModel):
+    """Schema for update exercise (for admin)."""
+    # Base info
+    topic: str | None = Field(None, min_length=1, max_length=100)
+    difficult_level: LanguageLevelEnum | None = None
+    type: ExerciseTypeEnum | None = None
+    options: Options | None = None
+
+    # Question
+    question_text: str | None = Field(None, min_length=1)
+    question_language: LanguageEnum | None = None
+
+    # Answer
+    correct_answer: str | None = Field(None, min_length=1)
+    answer_language: LanguageEnum | None = None
+
+    # Translation (optional)
+    question_translation: str | None = Field(None, min_length=1)
+    question_translation_language: LanguageEnum | None = None
+
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            'examples': [
+                # Example 1: Update only difficulty
+                {
+                    'topic': None,
+                    'difficult_level': 'B2',
+                    'type': None,
+                    'options': None,
+                    'question_text': None,
+                    'question_language': None,
+                    'correct_answer': None,
+                    'answer_language': None,
+                    'question_translation': None,
+                    'question_translation_language': None
+                },
+                # Example 2: Update question text
+                {
+                    'topic': 'Present Perfect',
+                    'difficult_level': None,
+                    'type': None,
+                    'options': None,
+                    'question_text': 'I have been living here for 5 years',
+                    'question_language': None,
+                    'correct_answer': None,
+                    'answer_language': None,
+                    'question_translation': None,
+                    'question_translation_language': None
+                }
+            ]
+        }
+    )
+
+
+class ExerciseQuestion(BaseModel):
+    """Schema for question response."""
+    id: int
+    type: ExerciseTypeEnum
+    question_text: str
+    options: Options | None
+
+    @computed_field
+    @property
+    def instruction(self) -> str:
+        return self.type.instruction
+
+    model_config = ConfigDict(
+        use_enum_values=True,
+        from_attributes=True,
+        json_schema_extra={
+            'example': [
+                # Example 1: Translation exercise
+                {
+                    'id': 1,
+                    'type': 'Translate the following text',
+                    'question_text': 'I have lived here for 5 years',
+                    'options': None,
+                },
+                # Example 2: Multiple choice
+                {
+                    'id': 2,
+                    'type': 'Choose the correct answer from the options below',
+                    'question_text': 'Yesterday I ___ to the store',
+                    'options': {
+                        'A': 'go',
+                        'B': 'went',
+                        'C': 'gone',
+                        'D': 'going'
+                    },
+                },
+                # Example 3: Fill in the blank
+                {
+                    'id': 3,
+                    'type': 'Fill in the blank with the correct word',
+                    'question_text': 'I have ___ apple',
+                    'options': None,
+                }
+            ]
+        }
+    )
+
+
+class ExerciseUserAnswer(BaseModel):
+    """Schema for user answer submission."""
+    user_answer: str
+    time_spend_seconds: int = Field(gt=0, description="Time spent answering (seconds)")
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            'example': [
+                # Example 1: Translation exercise
+                {
+                    'user_answer': 'Я живу тут 5 років',
+                    'time_spend_seconds': 44
+                },
+                # Example 2: Multiple choice
+                {
+                    'user_answer': 'went',
+                    'time_spend_seconds': 13
+                },
+                # Example 3: Fill in the blank
+                {
+                    'user_answer': 'an',
+                    'time_spend_seconds': 22
+                }
+            ]
+        }
+    )
+
+
+class ExerciseCorrectAnswer(BaseModel):
+    """Schema for response after answer submission."""
+    id: int
+    question_text: str
+    correct_answer: str = Field(min_length=1)
+    user_answer: str
+    is_correct: bool
+    question_translation: str | None
+    explanation: str | None = None
+
+    model_config = ConfigDict(
+        use_enum_values=True,
+        from_attributes=True,
+        json_schema_extra={
+            'example': [
+                {
+                    # Example 1: Translation exercise
+                    'id': 1,
+                    'question_text': 'I have lived here for 5 years',
+                    'correct_answer': 'Я живу тут 5 років',
+                    'user_answer': 'Я живу тут 5 років',
+                    'is_correct': True,
+                    'question_translation': None,
+                    'explanation': None
+                },
+                {
+                    # Example 2: Multiple choice
+                    'id': 2,
+                    'question_text': 'Yesterday I ___ to the store',
+                    'correct_answer': 'went',
+                    'user_answer': 'go',
+                    'is_correct': False,
+                    'question_translation': 'Вчора я пішов у магазин',
+                    'explanation': None
+                },
+                # Example 3: Fill in the blank
+                {
+                    'id': 3,
+                    'question_text': 'I have ___ apple',
+                    'correct_answer': 'an',
+                    'user_answer': 'a',
+                    'is_correct': False,
+                    'question_translation': 'У мене є яблуко',
+                    'explanation': None
+                }
+            ]
+        }
+    )
+
+
+class ExerciseFilter(BaseModel):
+    """Schema for filtering exercises based on optional criteria."""
+    topic: str | None = Field(None, min_length=1, max_length=100)
+    difficult_level: LanguageLevelEnum | None = None
+    type: ExerciseTypeEnum | None = None
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            'example': {
+                'topic': None,
+                'difficult_level': 'B1',
+                'type': None,
+            }
+        }
+    )
+
+
+
+class ExerciseBrief(ExerciseBase):
+    """Brief schema for exercise response."""
+    id: int
+    question_language: LanguageEnum
+    answer_language: LanguageEnum
+
+    @computed_field
+    @property
+    def question_language_full_name(self) -> str:
+        return self.question_language.full_name
+
+    @computed_field
+    @property
+    def answer_language_full_name(self) -> str:
+        return self.answer_language.full_name
+
+    @computed_field
+    @property
+    def type_display_name(self) -> str:
+        return self.type.display_name
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        use_enum_values=True,
+        json_schema_extra={
+            'example': {
+                'id': 1,
+                'topic': 'Present Perfect',
+                'difficult_level': 'B1',
+                'type': 'Sentence translation',
+                'question_language': 'English',
+                'answer_language': 'Ukrainian'
+            }
+        }
+    )
+
+
+class ExerciseRead(ExerciseBrief):
+    """Schema for exercise response (for admin)."""
+    # Base info
+    options: Options | None = None
+
+    # Question
+    question_text: str = Field(min_length=1)
+
+    # Answer
+    correct_answer: str = Field(min_length=1)
+
+    # Translation (optional)
+    question_translation: str | None = Field(None, min_length=1)
+    question_translation_language: LanguageEnum | None = None
+
+    # Metadata
+    added_at: datetime
+    is_active: bool
+
+    @computed_field
+    @property
+    def question_translation_full_name(self) -> str | None:
+        if self.question_language is None:
+            return None
+        return self.question_translation_language.full_name
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        use_enum_values=True,
+        json_schema_extra={
+            'examples': [
+                # Example 1: Translation exercise
+                {
+                    'id': 1,
+                    'topic': 'Present Perfect',
+                    'difficult_level': 'B1',
+                    'type': 'sentence_translation',
+                    'question_language': 'en',
+                    'answer_language': 'uk',
+                    'options': None,
+                    'question_text': 'I have lived here for 5 years',
+                    'correct_answer': 'Я живу тут 5 років',
+                    'question_translation': None,
+                    'question_translation_language': None,
+                    'added_at': '2024-12-20T12:30:00Z',
+                    'is_active': True
+                },
+                # Example 2: Multiple choice
+                {
+                    'id': 2,
+                    'topic': 'Past Simple Verbs',
+                    'difficult_level': 'A2',
+                    'type': 'multiple_choice',
+                    'question_language': 'en',
+                    'answer_language': 'en',
+                    'options': {
+                        'A': 'go',
+                        'B': 'went',
+                        'C': 'gone',
+                        'D': 'going'
+                    },
+                    'question_text': 'Yesterday I ___ to the store',
+                    'correct_answer': 'went',
+                    'question_translation': 'Вчора я пішов у магазин',
+                    'question_translation_language': 'uk',
+                    'added_at': '2024-12-20T12:30:00Z',
+                    'is_active': True
+                },
+                # Example 2: Fill blank
+                {
+                    'id': 3,
+                    'topic': 'Articles',
+                    'difficult_level': 'A1',
+                    'type': 'fill_blank',
+                    'question_language': 'en',
+                    'answer_language': 'en',
+                    'options': None,
+                    'question_text': 'I have ___ apple',
+                    'correct_answer': 'an',
+                    'question_translation': 'У мене є яблуко',
+                    'question_translation_language': 'uk',
+                    'added_at': '2024-12-20T12:30:00Z',
+                    'is_active': True
+                },
+            ]
+        }
+    )
