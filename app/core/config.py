@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     # Application
     APP_NAME: str = "Language app"
     DESCRIPTION: str = "API for learning English and German with AI-generated exercises"
-    VERSION: str = "1.0.0"
+    VERSION: str = "0.1.0"
     DEBUG: bool = True
     ENVIRONMENT: Literal["development", "production"] = "development"
 

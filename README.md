@@ -14,6 +14,26 @@ The project is in early development stage and serves as an engineering portfolio
 
 ---
 
+## 🛠️ Tech Stack
+
+**Implemented:**
+
+- Python 3.11+
+- SQLAlchemy 2.0 (async)
+- PostgreSQL 14+
+- Pydantic v2
+- Alembic (migrations)
+- Poetry (dependency management)
+
+**Planned:**
+
+- FastAPI 0.118+ (in development)
+- python-jose (JWT)
+- passlib[bcrypt] (password hashing)
+- pytest (testing)
+
+---
+
 ## 🧩 Current Progress
 
 ### ✅ Implemented
@@ -193,7 +213,8 @@ migrations/                   # ✅ Implemented
 
 .env.example                  # Configuration example
 alembic.ini                   # Alembic configuration
-requirements.txt              # Dependencies
+pyproject.toml                # Project configuration and dependencies.
+poetry.toml                   # Locked dependency versions.
 README.md
 ```
 
@@ -208,76 +229,47 @@ README.md
 
 ---
 
-## 🛠️ Tech Stack
-
-**Implemented:**
-
-- Python 3.11+
-- SQLAlchemy 2.0 (async)
-- PostgreSQL 14+
-- Pydantic v2
-- Alembic (migrations)
-
-**Planned:**
-
-- FastAPI 0.118+ (in development)
-- python-jose (JWT)
-- passlib[bcrypt] (password hashing)
-- pytest (testing)
-
----
-
 ## 🚀 Quick Start (for developers)
 
 ### 1. Clone the repository
-
-bash
-
-```sql
-git clone https://github.com/denysdontsu/language-learning-backend.git
-cd language-learning-backend
+```bash
+git clone https://github.com/denisdoncu/LanguageProject.git
+cd LanguageProject
 ```
 
 ### 2. Install dependencies
 
-bash
+Poetry manages virtual environments automatically:
+```bash
+poetry install
+```
 
-```sql
-python -m venv .venv
-source .venv/bin/activate  # macOS/Linux
-# or .venv\Scripts\activate for Windows
+**First time using Poetry?** Install it:
+```bash
+# Install poetry
+pip install poetry
 
-pip install -r requirements.txt
+# Verify installation
+poetry --version
 ```
 
 ### 3. Configure .env
-
-bash
-
-```sql
+```bash
 cp .env.example .env
 ```
 
-Fill in `.env`:
-
-env
-
-```sql
+Fill in `.env`:
+```env
 POSTGRES_USER=postgres_user
 POSTGRES_PASSWORD=password
 POSTGRES_HOST=localhost
 POSTGRES_PORT=5432
 POSTGRES_DB=postgres_db_name
 SECRET_KEY=your-secret-key-min-32-chars
-ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=1440
 ```
 
 ### 4. Create database
-
-bash
-
-```sql
+```bash
 # PostgreSQL
 createdb language_db
 
@@ -288,24 +280,20 @@ CREATE DATABASE language_db;
 ```
 
 ### 5. Apply migrations
-
-bash
-
-```sql
-alembic upgrade head
+```bash
+poetry run alembic upgrade head
 ```
+
+**Note:** `poetry run` ensures commands execute in Poetry's virtual environment.
 
 ### 6. Current state
 
-⚠️ **API endpoints are not implemented.**
+⚠️ **API endpoints are not implemented.**
 
 Only the database layer (models + migrations) is available.
 
 To view database structure:
-
-bash
-
-```sql
+```bash
 psql -d language_db -c "\dt"       # List tables
 psql -d language_db -c "\d users"  # users table structure
 ```

@@ -15,4 +15,7 @@ venv/
 
 # Logs
 *.log
-/requirements.txt
+
+# Dependency artifacts
+requirements.txt
+requirements-*.txt

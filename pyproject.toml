@@ -1,0 +1,28 @@
+[project]
+name = "language-learning-backend"
+version = "0.1.0"
+description = "Backend API for a language learning platform."
+authors = [{ name = "Denys Dontsu", email = "dendontsi01@gmail.com" }]
+readme = "README.md"
+requires-python = ">=3.12"
+
+dependencies = [
+    "fastapi==0.118.0",
+    "uvicorn[standard]==0.38.0",
+    "sqlalchemy==2.0.43",
+    "asyncpg==0.31.0",
+    "alembic==1.16.5",
+    "python-jose[cryptography]==3.5.0",
+    "passlib[bcrypt]==1.7.4",
+    "pydantic==2.12.0",
+    "pydantic-settings==2.12.0",
+    "email-validator==2.3.0",
+    "python-multipart==0.0.9",
+]
+
+[tool.poetry]
+package-mode = false
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
