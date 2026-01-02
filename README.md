@@ -23,13 +23,13 @@ The project is in early development stage and serves as an engineering portfolio
 - PostgreSQL 14+
 - Pydantic v2
 - Alembic (migrations)
+- python-jose (JWT)
+- argon2-cffi (password hashing)
 - Poetry (dependency management)
 
 **Planned:**
 
 - FastAPI 0.118+ (in development)
-- python-jose (JWT)
-- passlib[bcrypt] (password hashing)
 - pytest (testing)
 
 ---
@@ -50,10 +50,10 @@ The project is in early development stage and serves as an engineering portfolio
 - **Core utilities:**
     - Application configuration (Pydantic Settings)
     - Async PostgreSQL connection
+    - Security utilities (JWT, password hashing)
 
 ### 🟡 In Development
 
-- Security utilities (JWT, password hashing)
 - CRUD layer (users, exercises, user_languages, history)
 - JWT authentication
 - API endpoints (FastAPI)
@@ -166,7 +166,7 @@ user_exercise_history
 app/
 ├── core/
 │   ├── config.py             # Pydantic Settings
-│   └── security.py           # 🟡 In development
+│   └── security.py           # JWT & Argon2 
 │
 ├── db/
 │   ├── __init__.py
@@ -183,13 +183,13 @@ app/
 │   ├── exercise.py
 │   └── exercise_history.py
 │
-├── models/                   # ✅ Implemented
+├── models/                   # SQLAlchemy nodels
 │   ├── users.py
 │   ├── user_level_languages.py
 │   ├── exercises.py
 │   └── user_exercise_history.py
 │
-├── schemas/                  # ✅ Implemented
+├── schemas/                  # Pydentic schemas & Enums
 │   ├── common.py             # Options
 │   ├── enums.py              # Language, Level, ExerciseType
 │   ├── user.py
@@ -197,13 +197,13 @@ app/
 │   ├── exercise.py
 │   └── user_exercise_history.py
 │
-├── utils/                    # ✅ Implemented
+├── utils/                    
 │   ├── validators.py         # Business logic validation
 │   └── enum_utils.py         # Enum helpers
 │
 └── main.py                   # FastAPI app (stub)
 
-migrations/                   # ✅ Implemented
+migrations/                   # Alembic migrations
 ├── versions/
 │   ├── 99a19fb9275f_initial.py
 │   ├── 3ebb198c91e4_add_non_nullable_text_column.py
@@ -214,7 +214,7 @@ migrations/                   # ✅ Implemented
 .env.example                  # Configuration example
 alembic.ini                   # Alembic configuration
 pyproject.toml                # Project configuration and dependencies.
-poetry.toml                   # Locked dependency versions.
+poetry.lock                   # Locked dependency versions.
 README.md
 ```
 
@@ -266,6 +266,15 @@ POSTGRES_HOST=localhost
 POSTGRES_PORT=5432
 POSTGRES_DB=postgres_db_name
 SECRET_KEY=your-secret-key-min-32-chars
+```
+
+**Generate a secure SECRET_KEY:**
+```bash
+# Python
+python -c "import secrets; print(secrets.token_urlsafe(32))"
+
+# OpenSSL
+openssl rand -hex 32
 ```
 
 ### 4. Create database
