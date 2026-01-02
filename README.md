@@ -51,13 +51,14 @@ The project is in early development stage and serves as an engineering portfolio
     - Application configuration (Pydantic Settings)
     - Async PostgreSQL connection
     - Security utilities (JWT, password hashing)
+    - Database session dependency injection
 
 ### 🟡 In Development
 
 - CRUD layer (users, exercises, user_languages, history)
 - JWT authentication
 - API endpoints (FastAPI)
-- Dependency injection (get_db, get_current_user)
+- Dependency injection (get_current_user)
 
 ### 🔴 Planned
 
@@ -175,7 +176,7 @@ app/
 │
 ├── api/                      # 🟡 In development
 │   ├── endpoints/
-│   └── dependencies.py
+│   └── dependencies.py       # Database session dependency
 │
 ├── crud/                     # 🟡 In development
 │   ├── user.py
