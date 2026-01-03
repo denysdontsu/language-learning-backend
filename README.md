@@ -193,6 +193,7 @@ app/
 ├── schemas/                  # Pydentic schemas & Enums
 │   ├── common.py             # Options
 │   ├── enums.py              # Language, Level, ExerciseType
+│   ├── token.py              # JWTPayload 
 │   ├── user.py
 │   ├── user_level_language.py
 │   ├── exercise.py

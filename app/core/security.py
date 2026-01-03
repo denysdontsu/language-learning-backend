@@ -1,16 +1,27 @@
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
-from jose import jwt, JWTError
+from jose import jwt, ExpiredSignatureError, JWTError
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError, InvalidHashError
 
+from fastapi import HTTPException, status, Depends
 from fastapi.security import OAuth2PasswordBearer
+from pydantic import ValidationError
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+from app.schemas.token import JWTPayload
 
 # Password hashing context
-password_hasher = PasswordHasher()
+# Project parameters (lower for development speed)
+password_hasher = PasswordHasher(
+    time_cost=2,
+    memory_cost=19456,
+    parallelism=1,
+    hash_len=32,
+    salt_len=16
+)
 
 # OAuth2 scheme for token extraction
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl='/auth/login')
@@ -42,11 +53,9 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
         password_hasher.verify(hashed_password, plain_password)
         return True
 
-    except VerifyMismatchError:
+    except (VerifyMismatchError, InvalidHashError):
         return False
 
-    except InvalidHashError:
-        return False
 
 def create_access_token(data: dict[str, Any],
                         expires_delta: timedelta | None = None) -> str:
@@ -70,27 +79,26 @@ def create_access_token(data: dict[str, Any],
     if not isinstance(data['user_id'], int):
         raise ValueError("'user_id' must be an integer")
 
-    to_encode = data.copy()
-
     now = datetime.now(timezone.utc)
     if expires_delta:
         expire = now + expires_delta
     else:
         expire = now + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
 
-    to_encode.update({
+    payload = {
         'sub': str(data['user_id']),
         'role': data.get('role', 'user'),
-        'iat': now,
-        'exp': expire
-    })
-    encoded_jwt = jwt.encode(to_encode,
+        'iat': int(now.timestamp()),
+        'exp': int(expire.timestamp())
+    }
+    encoded_jwt = jwt.encode(payload,
                       key=settings.SECRET_KEY,
                       algorithm=settings.JWT_ALGORITHM)
 
     return encoded_jwt
 
-def decode_access_token(token: str) -> dict[str, Any]:
+
+def decode_access_token(token: str) -> JWTPayload:
     """
     Decode and verify a JWT access token.
 
@@ -98,21 +106,32 @@ def decode_access_token(token: str) -> dict[str, Any]:
         token: JWT token string
 
     Returns:
-        Decoded payload dict containing sub, role, iat, exp
+        Validated JWTPayload with sub, role, iat, exp
 
     Raises:
-        JWTError: If token is invalid, expired, or signature verification fails
+        HTTPException: If token is invalid, expired, or validation fails
     """
     try:
         payload = jwt.decode(token,
                           key=settings.SECRET_KEY,
                           algorithms=[settings.JWT_ALGORITHM])
-        if 'user_id' not in payload:
-            raise JWTError("'Token missing 'user_id'' claim")
 
+        # Validate payload fields with Pydantic
+        payload = JWTPayload(**payload)
         return payload
 
-    except JWTError:
-        raise JWTError(f'Invalid or expired token')
-    except Exception as e:
-        raise Exception(f'Token validation failed: {e}')
+    except ExpiredSignatureError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token has expired")
+
+    except JWTError as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Invalid token: {e}")
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token payload"
+        )
