@@ -12,17 +12,16 @@ class UserLevelBase(BaseModel):
     level: LanguageLevelEnum
 
 
-class UserLevelCreate(UserLevelBase):
+class UserLevelCreate(BaseModel):
     """Schema for adding language for user's learning list."""
-    level: LanguageLevelEnum = Field(
-        default=LanguageLevelEnum.A1,
+    level: LanguageLevelEnum | None = Field(
+        default=None,
         description='Current language proficiency level (CEFR)'
     )
 
     model_config = ConfigDict(
         json_schema_extra={
             'example': {
-                'language': 'en',
                 'level': 'B2'
             }
         }
