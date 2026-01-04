@@ -1,14 +1,12 @@
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
-from jose import jwt, ExpiredSignatureError, JWTError
 from argon2 import PasswordHasher
-from argon2.exceptions import VerifyMismatchError, InvalidHashError
+from argon2.exceptions import InvalidHashError, VerifyMismatchError
+from jose import ExpiredSignatureError, JWTError, jwt
 
-from fastapi import HTTPException, status, Depends
+from fastapi import HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from pydantic import ValidationError
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.schemas.token import JWTPayload
@@ -123,15 +121,17 @@ def decode_access_token(token: str) -> JWTPayload:
     except ExpiredSignatureError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token has expired")
+            detail="Token has expired",
+            headers={"WWW-Authenticate": "Bearer"})
 
     except JWTError as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Invalid token: {e}")
+            detail=f"Invalid token: {e}",
+            headers={"WWW-Authenticate": "Bearer"})
 
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token payload"
-        )
+            detail=f"Invalid token payload {e}",
+            headers={"WWW-Authenticate": "Bearer"})
