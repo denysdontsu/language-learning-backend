@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 from pydantic import BaseModel, EmailStr, Field, ConfigDict, field_validator
 
 from app.utils.validators import validate_password_strength
-from app.schemas.enums import LanguageEnum
+from app.schemas.enums import LanguageEnum, LanguageLevelEnum
 
 if TYPE_CHECKING:
     from app.schemas.user_level_language import UserLevelBrief
@@ -25,8 +25,6 @@ class UserCreate(UserBase):
         max_length=100,
         description='Password must have letter, digit and special character'
     )
-    active_learning_language: LanguageEnum
-
 
     @field_validator('password')
     @classmethod
@@ -41,8 +39,29 @@ class UserCreate(UserBase):
                 'name': 'Denis',
                 'username': 'denisD',
                 'native_language': 'uk',
-                'active_learning_language': 'en',
                 'password': 'ExamplePass123!'
+            }
+        }
+    )
+
+
+class UserCreateWithLanguage(UserCreate):
+    active_learning_language: LanguageEnum
+    active_language_level: LanguageLevelEnum = Field(
+        default=LanguageLevelEnum.A1,
+        description="Language proficiency level (CEFR). Defaults to A1 for beginners."
+    )
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            'example':{
+                'email': 'example@mail.com',
+                'name': 'Denis',
+                'username': 'denisD',
+                'native_language': 'uk',
+                'password': 'ExamplePass123!',
+                'active_learning_language': 'en',
+                'active_language_level': 'B1'
             }
         }
     )
@@ -67,6 +86,7 @@ class UserUpdate(BaseModel):
             }
         }
     )
+
 
 class UserLogin(BaseModel):
     """Schema for login user."""

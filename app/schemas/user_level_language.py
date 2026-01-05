@@ -1,5 +1,4 @@
 from datetime import datetime
-
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.schemas.enums import LanguageLevelEnum, LanguageEnum
@@ -12,18 +11,28 @@ class UserLevelBase(BaseModel):
     level: LanguageLevelEnum
 
 
-class UserLevelCreate(BaseModel):
+class UserLanguageLevelUpdate(BaseModel):
     """Schema for adding language for user's learning list."""
     level: LanguageLevelEnum | None = Field(
         default=None,
-        description='Current language proficiency level (CEFR)'
+        description=(
+            'Current language proficiency level (CEFR).'
+            'On creation: defaults to A1 if not provided.'
+            'On update: keeps existing level if not provided.'
+        )
+    )
+    make_active: bool = Field(
+        default=False,
+        description='Set this language as active learning language'
     )
 
     model_config = ConfigDict(
         json_schema_extra={
-            'example': {
-                'level': 'B2'
-            }
+            'example': [
+                {'level': 'B2'},
+                {'make_active': True},
+                {'level': 'B1', 'make_active': True}
+            ]
         }
     )
 
