@@ -102,8 +102,8 @@ class ExerciseHistoryRead(BaseModel):
                     'topic': 'Past Simple Verbs',
                     'difficult_level': 'A2',
                     'type': 'multiple_choice',
-                    'question_language': 'en',
-                    'answer_language': 'en'
+                    'question_language': 'English',
+                    'answer_language': 'Ukrainian'
                 },
                 'user_answer': 'went',
                 'is_correct': True,

@@ -357,7 +357,7 @@ class ExerciseRead(ExerciseBrief):
     @computed_field
     @property
     def question_translation_full_name(self) -> str | None:
-        if self.question_language is None:
+        if self.question_translation_language is None:
             return None
         return self.question_translation_language.full_name
 
@@ -399,7 +399,7 @@ class ExerciseRead(ExerciseBrief):
                     'question_text': 'Yesterday I ___ to the store',
                     'correct_answer': 'went',
                     'question_translation': 'Вчора я пішов у магазин',
-                    'question_translation_language': 'uk',
+                    'question_translation_language': 'Ukrainian',
                     'added_at': '2024-12-20T12:30:00Z',
                     'is_active': True
                 },
@@ -415,7 +415,7 @@ class ExerciseRead(ExerciseBrief):
                     'question_text': 'I have ___ apple',
                     'correct_answer': 'an',
                     'question_translation': 'У мене є яблуко',
-                    'question_translation_language': 'uk',
+                    'question_translation_language': 'Ukrainian',
                     'added_at': '2024-12-20T12:30:00Z',
                     'is_active': True
                 },
