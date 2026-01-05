@@ -16,7 +16,10 @@ class User(Base):
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     username: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
     native_language: Mapped[language]
-    active_learning_language_id: Mapped[int] = mapped_column(BigInteger, ForeignKey('user_level_languages.id'))
+    active_learning_language_id: Mapped[int | None] = mapped_column(
+        BigInteger,
+        ForeignKey('user_level_languages.id'),
+        nullable=True)
 
     # Security
     hashed_password: Mapped[str] = mapped_column(Text, nullable=False)

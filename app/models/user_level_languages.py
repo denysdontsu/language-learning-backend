@@ -1,4 +1,4 @@
-from sqlalchemy import Index
+from sqlalchemy import Index, CheckConstraint, UniqueConstraint
 from sqlalchemy.orm import Mapped, relationship
 
 from app.db.connection import Base
@@ -26,6 +26,11 @@ class UserLevelLanguage(Base):
 
     # Indexes
     __table_args__ = (
+        UniqueConstraint(
+            'user_id',
+            'language',
+            name='uq_user_one_active'
+        ),
         Index('ix_user_language',
               'user_id',
               'language',
