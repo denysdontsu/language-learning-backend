@@ -9,7 +9,7 @@ from fastapi import HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 
 from app.core.config import settings
-from app.schemas.token import JWTPayload
+from app.schemas.jwt_token import JWTPayload
 
 # Password hashing context
 # Project parameters (lower for development speed)

@@ -5,5 +5,5 @@ __all__ = [
     'exercise',
     'user_exercise_history',
     'user_level_language',
-    'token'
+    'jwt_token'
 ]
