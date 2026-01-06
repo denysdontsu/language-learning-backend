@@ -1,4 +1,4 @@
-from sqlalchemy import Index, CheckConstraint, UniqueConstraint
+from sqlalchemy import UniqueConstraint
 from sqlalchemy.orm import Mapped, relationship
 
 from app.db.connection import Base
@@ -31,8 +31,4 @@ class UserLevelLanguage(Base):
             'language',
             name='uq_user_one_active'
         ),
-        Index('ix_user_language',
-              'user_id',
-              'language',
-              unique=True),
     )
