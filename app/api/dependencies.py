@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.connection import async_session_maker
 from app.core.security import decode_access_token, oauth2_scheme
-from app.models.users import User
+from app.models.user import User
 from app.crud.user import get_user_by_id
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
