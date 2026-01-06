@@ -51,14 +51,14 @@ The project is in early development stage and serves as an engineering portfolio
     - Application configuration (Pydantic Settings)
     - Async PostgreSQL connection
     - Security utilities (JWT, password hashing)
-    - Database session dependency injection
+    - Dependency injection 
 
 ### 🟡 In Development
 
 - CRUD layer (users, exercises, user_languages, history)
+- Services layer (users, exercises, user_languages, history)
 - JWT authentication
 - API endpoints (FastAPI)
-- Dependency injection (get_current_user)
 
 ### 🔴 Planned
 
@@ -74,7 +74,7 @@ The project is in early development stage and serves as an engineering portfolio
 ## 🗄️ Data Model
 
 ```sql
-users
+user
 ├─ id (PK)
 ├─ email (UNIQUE, CHECK: valid format)
 ├─ username (UNIQUE)
@@ -86,7 +86,7 @@ users
 ├─ is_active (default: true)
 └─ created_at
 
-user_level_languages
+user_level_language
 ├─ id (PK)
 ├─ user_id (FK → users.id)
 ├─ language (enum: uk, en, de)
@@ -94,7 +94,7 @@ user_level_languages
 ├─ created_at
 └─ [UNIQUE INDEX] (user_id, language)
 
-exercises
+exercise
 ├─ id (PK)
 ├─ topic
 ├─ difficult_level (enum: A1-C2)
@@ -158,6 +158,8 @@ user_exercise_history
     2. Add constraints (translation completeness)
     3. Add active learning language reference to user and rename translation fields
     4. Add non-nullable text column to persist user answers for exercises
+    5. Add unique constraint and make active_learning_language nullable
+    6. Remove duplicate unique index on user_level_languages
 
 ---
 
@@ -176,9 +178,10 @@ app/
 │
 ├── api/                      # 🟡 In development
 │   ├── endpoints/
-│   └── dependencies.py       # Database session dependency
+│   └── dependencies.py       # Dependency injection
 │
 ├── crud/                     # 🟡 In development
+│   ├── __init__.py
 │   ├── user.py
 │   ├── user_language.py
 │   ├── exercise.py
@@ -186,8 +189,8 @@ app/
 │
 ├── models/                   # SQLAlchemy nodels
 │   ├── users.py
-│   ├── user_level_languages.py
-│   ├── exercises.py
+│   ├── user_level_language.py
+│   ├── exercise.py
 │   └── user_exercise_history.py
 │
 ├── schemas/                  # Pydentic schemas & Enums
@@ -207,11 +210,14 @@ app/
 
 migrations/                   # Alembic migrations
 ├── versions/
-│   ├── 99a19fb9275f_initial.py
+│   ├── 99a19fb9275f_.py
 │   ├── 3ebb198c91e4_add_non_nullable_text_column.py
 │   ├── f47b1a71c0df_add_translation_completeness_check.py
-│   └── f4962d68824f_add_active_learning_language_reference.py
-└── env.py
+│   ├── f4962d68824f_add_active_learning_language_reference.py
+│   ├── f363429e20bf_add_unique_constraint_and_make_active_.py
+│   └── 808ed363444b_remove_duplicate_unique_index_on_user_.py
+├── env.py
+└── script.py.mako
 
 .env.example                  # Configuration example
 alembic.ini                   # Alembic configuration
@@ -332,8 +338,8 @@ The project is at the architecture design and data layer stage.
 - [x]  Alembic migrations
 - [x]  Pydantic schemas
 - [x]  Database constraints & indexes
+- [x]  JWT authentication
 - [ ]  CRUD operations
-- [ ]  JWT authentication
 - [ ]  API endpoints
 
 ### Phase 2: API & Features
