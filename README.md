@@ -104,8 +104,8 @@ exercise
 ├─ correct_answer
 ├─ answer_language (enum: uk, en, de)
 ├─ options (JSONB, nullable)
-├─ question_translation (nullable)
-├─ question_translation_language (nullable)
+├─ question_translation (nullable | str)
+├─ question_translation_language (nullable | enum: uk, en, de)
 ├─ is_active (default: true)
 ├─ added_at
 ├─ [CHECK] translation completeness
@@ -160,6 +160,7 @@ user_exercise_history
     4. Add non-nullable text column to persist user answers for exercises
     5. Add unique constraint and make active_learning_language nullable
     6. Remove duplicate unique index on user_level_languages
+    7. Add ' fill_blank' to exercise type enum
 
 ---
 
@@ -215,7 +216,8 @@ migrations/                   # Alembic migrations
 │   ├── f47b1a71c0df_add_translation_completeness_check.py
 │   ├── f4962d68824f_add_active_learning_language_reference.py
 │   ├── f363429e20bf_add_unique_constraint_and_make_active_.py
-│   └── 808ed363444b_remove_duplicate_unique_index_on_user_.py
+│   ├── 808ed363444b_remove_duplicate_unique_index_on_user_.py
+│   └──e9d426e6d045_add_fill_blank_to_exercise_type_enum.py
 ├── env.py
 └── script.py.mako
 
