@@ -16,10 +16,6 @@ class User(Base):
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     username: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
     native_language: Mapped[language]
-    active_learning_language_id: Mapped[int | None] = mapped_column(
-        BigInteger,
-        ForeignKey('user_level_languages.id'),
-        nullable=True)
 
     # Security
     hashed_password: Mapped[str] = mapped_column(Text, nullable=False)
@@ -29,6 +25,16 @@ class User(Base):
     # Metadata
     created_at: Mapped[created_at]
 
+    # Foreign keys
+    active_learning_language_id: Mapped[int | None] = mapped_column(
+        BigInteger,
+        ForeignKey(
+            'user_level_languages.id',
+            use_alter=True,
+            name='fk_user_active_language'
+        ),
+        nullable=True)
+
     # Relationships with UserLevelLanguage
     learning_languages: Mapped[list['UserLevelLanguage']] = relationship(
         foreign_keys='UserLevelLanguage.user_id',
@@ -37,13 +43,15 @@ class User(Base):
     )
 
     active_learning_language: Mapped['UserLevelLanguage'] = relationship(
-        foreign_keys='[active_learning_language_id]'
+        'UserLevelLanguage',
+        foreign_keys=[active_learning_language_id],
+        viewonly=True
     )
 
 
     # Relationship with UserExerciseHistory
-    exercise_history: Mapped[list['UserExerciseHistoryOrm']] = relationship(
-        foreign_keys='UserExerciseHistoryOrm.user_id',
+    exercise_history: Mapped[list['UserExerciseHistory']] = relationship(
+        foreign_keys='UserExerciseHistory.user_id',
         back_populates='user',
         cascade= 'all, delete-orphan'
     )

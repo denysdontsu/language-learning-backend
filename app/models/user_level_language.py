@@ -21,6 +21,8 @@ class UserLevelLanguage(Base):
 
     # Relationships
     user: Mapped['User'] = relationship(
+        'User',
+        foreign_keys='UserLevelLanguage.user_id',
         back_populates='learning_languages'
     )
 
