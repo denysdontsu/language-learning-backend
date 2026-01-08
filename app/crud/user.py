@@ -137,7 +137,7 @@ async def create_user_with_language(
 
     # Create learning language entry
     new_language = UserLevelLanguage(
-        user_id=user.id,
+        user_id=new_user.id,
         language=user.active_learning_language,
         level=user.active_language_level
     )
