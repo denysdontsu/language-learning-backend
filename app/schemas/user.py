@@ -1,13 +1,10 @@
 from datetime import datetime
-from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, EmailStr, Field, ConfigDict, field_validator
 
 from app.utils.validators import validate_password_strength
 from app.schemas.enums import LanguageEnum, LanguageLevelEnum
-
-if TYPE_CHECKING:
-    from app.schemas.user_level_language import UserLevelBrief
+from app.schemas.user_level_language import UserLanguageBase
 
 
 class UserBase(BaseModel):
@@ -16,6 +13,8 @@ class UserBase(BaseModel):
     name: str = Field(min_length=1, max_length=100)
     username: str = Field(min_length=3, max_length=50)
     native_language: LanguageEnum
+
+    model_config = ConfigDict(use_enum_values=True)
 
 
 class UserCreate(UserBase):
@@ -131,7 +130,7 @@ class UserBrief(UserBase):
 
 class UserBriefWithLang(UserBrief):
     """User brief schema with detailed active learning language."""
-    active_learning_language: 'UserLevelBrief'
+    active_learning_language: UserLanguageBase
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -144,7 +143,6 @@ class UserBriefWithLang(UserBrief):
                 'username': 'denisD',
                 'native_language': 'uk',
                 'active_learning_language': {
-                    'id': 1,
                     'language': 'en',
                     'level': 'B2',
                 }

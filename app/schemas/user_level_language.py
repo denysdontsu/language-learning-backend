@@ -1,14 +1,20 @@
 from datetime import datetime
+from typing import TYPE_CHECKING
+
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.schemas.enums import LanguageLevelEnum, LanguageEnum
-from app.schemas.user import UserBrief
+
+if TYPE_CHECKING:
+    from app.schemas.user import UserBrief
 
 
-class UserLevelBase(BaseModel):
+class UserLanguageBase(BaseModel):
     """Base fields for user language level."""
     language: LanguageEnum
     level: LanguageLevelEnum
+
+    model_config = ConfigDict(use_enum_values=True)
 
 
 class UserLanguageLevelUpdate(BaseModel):
@@ -37,7 +43,7 @@ class UserLanguageLevelUpdate(BaseModel):
     )
 
 
-class UserLevelUpdate(BaseModel):
+class UserLanguageUpdate(BaseModel):
     """Schema for updating language proficiency level."""
     level: LanguageLevelEnum
 
@@ -50,7 +56,7 @@ class UserLevelUpdate(BaseModel):
     )
 
 
-class UserLevelBrief(UserLevelBase):
+class UserLanguageBrief(UserLanguageBase):
     """Brief schema for user language level response."""
     id: int
 
@@ -67,9 +73,9 @@ class UserLevelBrief(UserLevelBase):
     )
 
 
-class UserLevelRead(UserLevelBase):
+class UserLanguageRead(UserLanguageBrief):
     """Schema for user language level response (admin only)."""
-    user: UserBrief
+    user: 'UserBrief'
     created_at: datetime
 
     model_config = ConfigDict(
