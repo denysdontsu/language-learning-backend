@@ -1,7 +1,8 @@
-from app.core.config import settings
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+from app.api.endpoints import auth
+from app.core.config import settings
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -34,3 +35,5 @@ async def root():
 @app.get('/health')
 async def health_check():
     return {'status': 'healthy'}
+
+app.include_router(auth.router)
