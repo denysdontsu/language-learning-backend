@@ -4,13 +4,46 @@ Backend API for a language learning platform.
 
 The project is in early development stage and serves as an engineering portfolio.
 
-> ⚠️ Status: Early development (V0.1)
->
->
-> SQLAlchemy models, Pydantic schemas, and core utilities are implemented.
->
-> API and business logic are under development.
->
+## 📡 API Endpoints (Implemented)
+
+### Authentication
+
+- **POST** `/auth/register` — Simple user registration
+    - Request: `UserCreate` (email, username, name, native_language, password)
+    - Response: `UserBrief` (201 Created)
+    - Validates email/username uniqueness, password strength
+
+- **POST** `/auth/register/complete` — Registration with learning language
+    - Request: `UserCreateWithLanguage` (+ active_learning_language, active_language_level)
+    - Response: `UserBriefWithLang` (201 Created)
+    - Creates user and language entry in single transaction
+
+**Login:**
+
+- **POST** `/auth/token` — OAuth2 login (for Swagger UI)
+    - Request: Form data (username=email, password)
+    - Response: `{"access_token": "...", "token_type": "bearer"}`
+    - Used by Swagger UI "Authorize" button
+
+- **POST** `/auth/login` — JSON login (for frontend)
+    - Request: `UserLogin` (email, password)
+    - Response: `{"access_token": "...", "token_type": "bearer"}`
+    - Returns JWT token for authentication
+
+### User languages
+
+- **GET** `/users/me/languages` — Get user's learning languages
+    - Response: `list[UserLanguageBrief]`
+    - Requires active learning language
+    - Returns empty list if no languages
+
+- **POST** `/users/me/languages/{language}` — Add or update learning language
+    - Path param: `language` (ISO 639-1 code: en, uk, de)
+    - Request: `UserLanguageLevelUpdate` (level, make_active)
+    - Response: `UserLanguageBrief` (201 Created)
+    - Creates if not exists (defaults to A1), updates if exists
+
+**Note:** Authentication required for `/users/me/*` endpoints (JWT Bearer token).
 
 ---
 
@@ -40,31 +73,42 @@ The project is in early development stage and serves as an engineering portfolio
 
 - **Database layer:**
     - SQLAlchemy 2.0 async models with relationships
-    - Alembic migrations (4 revisions)
+    - Alembic migrations (7 revisions)  // ← было 4, стало 7
     - Database constraints (email format, positive time, translation completeness)
     - Optimized indexes (partial, composite, unique)
 - **Schema layer:**
     - Pydantic v2 schemas with validation
     - Enums for languages, levels, and exercise types
     - Business logic validation (exercise options, translations)
+    - Circular import resolution using TYPE_CHECKING
 - **Core utilities:**
     - Application configuration (Pydantic Settings)
     - Async PostgreSQL connection
-    - Security utilities (JWT, password hashing)
-    - Dependency injection 
+    - Security utilities (JWT, password hashing, Argon2)
+    - Dependency injection with FastAPI
+    - JWT authentication with role-based access
+- **CRUD layer:**
+    - Users: create, read by id/email/username, update active language
+    - User languages: create, read, update, get all by user
+- **Services layer:**
+    - Authentication: user registration (simple & with language), login
+    - User languages: add/update learning languages
+- **API endpoints:**
+    - Authentication: POST /auth/register, /auth/register/complete
+    - User languages: GET /users/me/languages, POST /users/me/languages/{language}
 
 ### 🟡 In Development
 
-- CRUD layer (users, exercises, user_languages, history)
-- Services layer (users, exercises, user_languages, history)
-- JWT authentication
-- API endpoints (FastAPI)
+- CRUD layer (exercises, exercise history)
+- Services layer (exercises, history, statistics)
+- API endpoints (exercises, user profile, history)
+- Login endpoint and token refresh
 
 ### 🔴 Planned
 
 - User history and statistics
 - Admin panel for exercise management
-- Unit and integration tests
+- Unit and integration tests (pytest)
 - Docker setup
 - CI/CD pipeline
 - AI-powered exercise generation (V2)
@@ -177,27 +221,33 @@ app/
 │   ├── column_types.py       # Custom SQLAlchemy types
 │   └── connection.py         # Async SQLAlchemy engine
 │
-├── api/                      # 🟡 In development
+├── api/                      # Partially implemented
 │   ├── endpoints/
+│   │   ├── auth.py           # Registration endpoints
+│   │   └── languages.py      # Language management endpoints
 │   └── dependencies.py       # Dependency injection
 │
-├── crud/                     # 🟡 In development
-│   ├── __init__.py
-│   ├── user.py
-│   ├── user_language.py
-│   ├── exercise.py
-│   └── exercise_history.py
+├── crud/                     # Partially implemented
+│   ├── user.py               # User CRUD operations
+│   ├── user_language.py      # Language CRUD operations
+│   ├── exercise.py           # 🟡 In development
+│   └── exercise_history.py   # 🟡 In development
 │
-├── models/                   # SQLAlchemy nodels
-│   ├── users.py
+├── services/                 # Partially implemented
+│   ├── __init__.py
+│   ├── auth.py               # Registration & authentication
+│   └── user_language.py      # Language management logic
+│
+├── models/                   # SQLAlchemy models
+│   ├── user.py
 │   ├── user_level_language.py
 │   ├── exercise.py
 │   └── user_exercise_history.py
 │
-├── schemas/                  # Pydentic schemas & Enums
+├── schemas/                  # Pydantic schemas & Enums
 │   ├── common.py             # Options
 │   ├── enums.py              # Language, Level, ExerciseType
-│   ├── token.py              # JWTPayload 
+│   ├── token.py              # JWT token schemas
 │   ├── user.py
 │   ├── user_level_language.py
 │   ├── exercise.py
@@ -207,25 +257,19 @@ app/
 │   ├── validators.py         # Business logic validation
 │   └── enum_utils.py         # Enum helpers
 │
-└── main.py                   # FastAPI app (stub)
+└── main.py                   # FastAPI app
 
 migrations/                   # Alembic migrations
 ├── versions/
-│   ├── 99a19fb9275f_.py
-│   ├── 3ebb198c91e4_add_non_nullable_text_column.py
+│   ├── 99a19fb9275f_initial.py
 │   ├── f47b1a71c0df_add_translation_completeness_check.py
 │   ├── f4962d68824f_add_active_learning_language_reference.py
+│   ├── 3ebb198c91e4_add_non_nullable_text_column.py
 │   ├── f363429e20bf_add_unique_constraint_and_make_active_.py
 │   ├── 808ed363444b_remove_duplicate_unique_index_on_user_.py
-│   └──e9d426e6d045_add_fill_blank_to_exercise_type_enum.py
+│   └── e9d426e6d045_add_fill_blank_to_exercise_type_enum.py
 ├── env.py
 └── script.py.mako
-
-.env.example                  # Configuration example
-alembic.ini                   # Alembic configuration
-pyproject.toml                # Project configuration and dependencies.
-poetry.lock                   # Locked dependency versions.
-README.md
 ```
 
 **Principles:**
@@ -305,29 +349,20 @@ poetry run alembic upgrade head
 
 **Note:** `poetry run` ensures commands execute in Poetry's virtual environment.
 
-### 6. Current state
+### 6. Run the application
 
-⚠️ **API endpoints are not implemented.**
-
-Only the database layer (models + migrations) is available.
-
-To view database structure:
+Start the FastAPI development server:
 ```bash
-psql -d language_db -c "\dt"       # List tables
-psql -d language_db -c "\d users"  # users table structure
+poetry run uvicorn app.main:app --reload
 ```
 
----
+**Access the API:**
+- API: http://localhost:8000
+- Interactive docs (Swagger): http://localhost:8000/docs
+- Alternative docs (ReDoc): http://localhost:8000/redoc
 
-## 🚧 Current Version Limitations
-
-- ❌ No API endpoints
-- ❌ No authentication
-- ❌ No business logic (CRUD)
-- ❌ No tests
-- ❌ Not intended for production
-
-The project is at the architecture design and data layer stage.
+Use Swagger UI to test endpoints interactively.
+⚠️ API is partially implemented and subject to change.
 
 ---
 
@@ -340,17 +375,18 @@ The project is at the architecture design and data layer stage.
 - [x]  Alembic migrations
 - [x]  Pydantic schemas
 - [x]  Database constraints & indexes
-- [x]  JWT authentication
-- [ ]  CRUD operations
-- [ ]  API endpoints
+- [x]  JWT authentication & dependencies
+- [x]  CRUD operations (users, languages)
+- [x]  User registration endpoints (simple & with language)
+- [x]  Login endpoint (OAuth2 + JSON)
 
 ### Phase 2: API & Features
 
-- [ ]  User registration & login
 - [ ]  User profile management
-- [ ]  Language management (add, update, remove)
+- [ ]  Languages endpoint
 - [ ]  Exercise CRUD
 - [ ]  Exercise submission & validation
+- [ ]  Exercise endpoint
 - [ ]  History tracking
 - [ ]  Statistics calculation
 
