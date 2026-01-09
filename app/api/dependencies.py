@@ -89,12 +89,12 @@ async def get_current_active_user(
         )
     return current_user
 
-current_user_dependency = Annotated[User, Depends(get_current_active_user)]
+current_active_user_dependency = Annotated[User, Depends(get_current_active_user)]
 """Active authenticated user. Use in most endpoints requiring authentication."""
 
 
 async def require_active_language(
-        current_user: current_user_dependency
+        current_user: current_active_user_dependency
 ) -> User:
     """
     Verify user has set an active learning language.
@@ -117,6 +117,11 @@ async def require_active_language(
         )
     return current_user
 
+user_active_language_dependency = Annotated[User, Depends(require_active_language)]
+"""
+Active user with learning language set.
+Use for language-specific endpoints (exercises, languages).
+"""
 
 async def require_admin(
         current_user: User = Depends(get_current_active_user)
