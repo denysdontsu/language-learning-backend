@@ -1,7 +1,7 @@
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.security import hash_password
+from app.core.security import hash_password, create_access_token, verify_password
 from app.crud.user import (
     get_user_by_email,
     create_user_with_language,
@@ -114,3 +114,50 @@ async def register_user_with_language(
             level=data.active_language_level
         )
     )
+
+
+async def authenticate_user(
+        db: AsyncSession,
+        email: str,
+        password: str
+) -> str:
+    """
+    Authenticate user and return JWT access token.
+
+    Args:
+        db: Database session
+        email: User email address
+        password: Plain text password
+
+    Returns:
+        str: JWT access token
+
+    Raises:
+        HTTPException: 401 if credentials invalid (wrong email or password)
+        HTTPException: 403 if account is disabled
+    """
+    # Find user by email
+    user =  await get_user_by_email(db, email)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail='Incorrect email or password',
+            headers={"WWW-Authenticate": "Bearer"}
+        )
+    # Verify password
+    if not verify_password(password, user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail='Incorrect email or password',
+            headers={"WWW-Authenticate": "Bearer"}
+        )
+    # Check if account is active
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail='Account is disabled',
+            headers={"WWW-Authenticate": "Bearer"}
+        )
+    # Create JWT token
+    token = create_access_token({'user_id': user.id, 'role': user.role})
+    return token

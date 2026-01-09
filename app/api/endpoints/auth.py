@@ -1,8 +1,17 @@
-from fastapi import APIRouter, status
+from fastapi import APIRouter, status, Depends
+from fastapi.security import OAuth2PasswordRequestForm
 
 from app.api.dependencies import db_dependency
-from app.schemas.user import UserCreate, UserCreateWithLanguage, UserBrief, UserBriefWithLang
-from app.services.auth import register_user_simple, register_user_with_language
+from app.schemas.user import (
+    UserCreate,
+    UserCreateWithLanguage,
+    UserBrief,
+    UserBriefWithLang,
+    UserLogin)
+from app.services.auth import (
+    register_user_simple,
+    register_user_with_language,
+    authenticate_user)
 
 router = APIRouter(prefix='/auth', tags=['Authentication'])
 
@@ -83,3 +92,66 @@ async def register_with_language(
         HTTPException: 422 if validation fails (weak password, invalid language code, etc.)
     """
     return await register_user_with_language(db, user_data)
+
+
+@router.post('/token',
+             status_code=status.HTTP_200_OK,
+             summary='OAuth2 compatible login for Swagger UI')
+async def login_oauth2(
+        db: db_dependency,
+        data: OAuth2PasswordRequestForm = Depends()
+):
+    """
+    Authenticate user via OAuth2 password flow.
+
+    OAuth2-compatible endpoint for Swagger UI authentication.
+    Uses form data with username and password fields.
+
+    Args:
+        db: Database session
+        data: OAuth2 form data with username (email) and password
+
+    Returns:
+        dict: Token response with access_token and token_type 'bearer'
+
+    Raises:
+        HTTPException: 401 if credentials invalid (wrong email or password)
+        HTTPException: 403 if account is disabled
+    """
+    token = await authenticate_user(db, data.username, data.password)
+
+    return {
+        'access_token': token,
+        'token_type': 'bearer'
+    }
+
+@router.post('/login',
+             status_code=status.HTTP_200_OK,
+             summary='JSON login endpoint for frontend applications')
+async def login(
+        db: db_dependency,
+        data: UserLogin
+):
+    """
+    Authenticate user with email and password.
+
+    JSON-based login endpoint for frontend applications.
+    Accepts email instead of username for authentication.
+
+    Args:
+        db: Database session
+        data: Login credentials with email and password
+
+    Returns:
+        dict: Token response with access_token and token_type ('bearer')
+
+    Raises:
+        HTTPException: 401 if credentials invalid (wrong email or password)
+        HTTPException: 403 if account is disabled
+    """
+    token = await authenticate_user(db, data.email, data.password)
+
+    return {
+        'access_token': token,
+        'token_type': 'bearer'
+    }
