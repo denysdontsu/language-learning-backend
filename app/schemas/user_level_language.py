@@ -14,7 +14,10 @@ class UserLanguageBase(BaseModel):
     language: LanguageEnum
     level: LanguageLevelEnum
 
-    model_config = ConfigDict(use_enum_values=True)
+    model_config = ConfigDict(
+        use_enum_values=True,
+        from_attributes=True
+    )
 
 
 class UserLanguageLevelUpdate(BaseModel):
