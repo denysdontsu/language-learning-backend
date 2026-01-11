@@ -1,5 +1,6 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 
 from app.models import UserLevelLanguage
 from app.models.user import User
@@ -175,3 +176,24 @@ async def update_active_language(
     await db.commit()
     await db.refresh(user)
     return user
+
+
+async def get_user_with_active_language(
+        db: AsyncSession,
+        user_id: int
+) -> User | None:
+    """
+    Get user with active learning language relationship loaded.
+
+    Args:
+        db: Database session
+        user_id: User ID
+
+    Returns:
+        User | None: User with loaded relationship, or None if not found
+    """
+    stmt = (select(User)
+            .options(joinedload(User.active_learning_language))
+            .where(User.id == user_id))
+    user = await db.execute(stmt)
+    return user.unique().scalar_one_or_none()

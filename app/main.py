@@ -1,8 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.endpoints import auth
+from app.api.endpoints import auth, users, languages
 from app.core.config import settings
+
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -37,3 +38,5 @@ async def health_check():
     return {'status': 'healthy'}
 
 app.include_router(auth.router)
+app.include_router(languages.router)
+app.include_router(users.router)
