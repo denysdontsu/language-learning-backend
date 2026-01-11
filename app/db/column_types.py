@@ -40,8 +40,7 @@ user_fk = Annotated[
     int,
     mapped_column(
         BigInteger,
-        ForeignKey('users.id'),
-        onupdate='CASCADE',
+        ForeignKey('users.id', ondelete='CASCADE'),
         nullable=False,
         comment='Reference to user'
     )

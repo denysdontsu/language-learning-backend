@@ -73,7 +73,7 @@ The project is in early development stage and serves as an engineering portfolio
 
 - **Database layer:**
     - SQLAlchemy 2.0 async models with relationships
-    - Alembic migrations (7 revisions)  // ← было 4, стало 7
+    - Alembic migrations (8 revisions)
     - Database constraints (email format, positive time, translation completeness)
     - Optimized indexes (partial, composite, unique)
 - **Schema layer:**
@@ -267,7 +267,8 @@ migrations/                   # Alembic migrations
 │   ├── 3ebb198c91e4_add_non_nullable_text_column.py
 │   ├── f363429e20bf_add_unique_constraint_and_make_active_.py
 │   ├── 808ed363444b_remove_duplicate_unique_index_on_user_.py
-│   └── e9d426e6d045_add_fill_blank_to_exercise_type_enum.py
+│   ├── e9d426e6d045_add_fill_blank_to_exercise_type_enum.py
+│   └── 860522b56861_fix_foreign_key_user_fk_cascade_.py
 ├── env.py
 └── script.py.mako
 ```
