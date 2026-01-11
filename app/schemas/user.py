@@ -72,7 +72,6 @@ class UserUpdate(BaseModel):
     name: str | None = Field(None, min_length=1, max_length=100)
     username: str | None = Field(None, min_length=3, max_length=50)
     native_language: LanguageEnum | None = None
-    active_learning_language: LanguageEnum | None = None
 
     model_config = ConfigDict(
         json_schema_extra={
@@ -81,7 +80,6 @@ class UserUpdate(BaseModel):
                 'name': 'Denis',
                 'username': None,
                 'native_language': None,
-                'active_learning_language': 'de'
             }
         }
     )

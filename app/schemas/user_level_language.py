@@ -46,19 +46,6 @@ class UserLanguageLevelUpdate(BaseModel):
     )
 
 
-class UserLanguageUpdate(BaseModel):
-    """Schema for updating language proficiency level."""
-    level: LanguageLevelEnum
-
-    model_config = ConfigDict(
-        json_schema_extra={
-            'example': {
-                'level': 'B2'
-            }
-        }
-    )
-
-
 class UserLanguageBrief(UserLanguageBase):
     """Brief schema for user language level response."""
     id: int
