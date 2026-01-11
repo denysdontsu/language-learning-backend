@@ -22,7 +22,7 @@ password_hasher = PasswordHasher(
 )
 
 # OAuth2 scheme for token extraction
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl='/auth/login')
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl='/auth/token')
 
 def hash_password(password: str) -> str:
     """
