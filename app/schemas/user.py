@@ -2,7 +2,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, EmailStr, Field, ConfigDict, field_validator
 
-from app.utils.validators import validate_password_strength
+from app.utils.validators import validate_password_strength, validate_string_field
 from app.schemas.enums import LanguageEnum, LanguageLevelEnum
 from app.schemas.user_level_language import UserLanguageBase
 
@@ -31,6 +31,12 @@ class UserCreate(UserBase):
         """Validate password strength."""
         return validate_password_strength(v)
 
+    @field_validator('name', 'username', mode='before')
+    @classmethod
+    def sanitize_field(cls, v, info):
+        """Sanitize and validate name and username fields."""
+        return validate_string_field(v, info)
+
     model_config = ConfigDict(
         json_schema_extra={
             'example': {
@@ -50,6 +56,12 @@ class UserCreateWithLanguage(UserCreate):
         default=LanguageLevelEnum.A1,
         description="Language proficiency level (CEFR). Defaults to A1 for beginners."
     )
+
+    @field_validator('name', 'username', mode='before')
+    @classmethod
+    def sanitize_field(cls, v, info):
+        """Sanitize and validate name and username fields."""
+        return validate_string_field(v, info)
 
     model_config = ConfigDict(
         json_schema_extra={
@@ -73,13 +85,19 @@ class UserUpdate(BaseModel):
     username: str | None = Field(None, min_length=3, max_length=50)
     native_language: LanguageEnum | None = None
 
+    @field_validator('name', 'username', mode='before')
+    @classmethod
+    def sanitize_field(cls, v, info):
+        """Sanitize and validate name and username fields."""
+        return validate_string_field(v, info)
+
     model_config = ConfigDict(
         json_schema_extra={
             'example': {
                 'email': None,
                 'name': 'Denis',
                 'username': None,
-                'native_language': None,
+                'native_language': 'en',
             }
         }
     )

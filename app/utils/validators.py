@@ -1,11 +1,20 @@
 import re
 
+from pydantic_core.core_schema import ValidationInfo
+
 from app.schemas.enums import ExerciseTypeEnum
 from app.schemas.common import Options
 
+# Reserved values that cannot be used in string fields
+RESERVED_VALUES = {'none', 'null', 'true', 'false', 'admin'}
 
-def validate_password_strength(password: str) -> str:
+
+def validate_password_strength(
+        password: str
+) -> str:
     """Validate password contains letter and digit."""
+    if password != password.strip():
+        raise ValueError("Password cannot start or end with whitespace")
     if not re.search(r'[A-Za-z]', password):
         raise ValueError('Password must contain at least one letter')
     if not re.search(r'\d', password):
@@ -37,7 +46,10 @@ def validate_question_translation_pair(
                          "must be provided together or both be null.")
 
 
-def validate_exercise_options(exercise_type: ExerciseTypeEnum, options: Options | None) -> None:
+def validate_exercise_options(
+        exercise_type: ExerciseTypeEnum,
+        options: Options | None
+) -> None:
     """
     Validate that options are provided correctly based on exercise type.
 
@@ -60,7 +72,10 @@ def validate_exercise_options(exercise_type: ExerciseTypeEnum, options: Options 
         raise ValueError(f"Exercise type '{exercise_type.value}' should not have options")
 
 
-def validate_translation_usage(exercise_type: ExerciseTypeEnum, question_translation) -> None:
+def validate_translation_usage(
+        exercise_type: ExerciseTypeEnum,
+        question_translation: str
+) -> None:
     """
     Validate that question_translation is used appropriately for each exercise type.
 
@@ -93,3 +108,40 @@ def validate_translation_usage(exercise_type: ExerciseTypeEnum, question_transla
                 "Translation required for 'multiple_choice' type. "
                 "Question is in target language, translation helps learners understand context."
             )
+
+
+def validate_string_field(
+        field: str | None,
+        info: ValidationInfo
+) -> str | None:
+    """
+    Validate and sanitize string field.
+
+    Trims whitespace, checks for empty strings, and prevents
+    reserved values (case-insensitive).
+
+    Args:
+        field: Field value to validate
+        info: Pydantic validation info (contains field_name)
+
+    Returns:
+        str | None: Sanitized field value or None
+
+    Raises:
+        ValueError: If field is empty or contains reserved value
+    """
+    if field is None:
+        return field
+
+    # Convert to string and strip whitespace
+    v = str(field).strip()
+
+    # Check if empty after strip
+    if not v:
+        raise ValueError(f'{info.field_name} cannot be empty or whitespace only')
+
+    # Check reserved values
+    if v.lower() in RESERVED_VALUES:
+        raise ValueError(f'{info.field_name} cannot be "{v}" (reserved value)')
+
+    return v
