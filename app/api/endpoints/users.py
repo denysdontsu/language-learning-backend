@@ -1,10 +1,18 @@
 from typing import Union
 
-from fastapi import APIRouter
+from fastapi import APIRouter, status
+from limiter import limit
 
 from app.api.dependencies import db_dependency, current_active_user_dependency
-from app.schemas.user import UserBriefWithLang, UserBrief, UserUpdate
-from app.services.user import get_user_profile, update_user_profile
+from app.schemas.user import (
+    UserBriefWithLang,
+    UserBrief,
+    UserUpdate,
+    UserChangePassword)
+from app.services.user import (
+    get_user_profile,
+    update_user_profile,
+    change_password)
 
 router = APIRouter(prefix='/users/me', tags=['Users']) # или правильнее User?
 
@@ -61,3 +69,36 @@ async def update_user_prof(
         HTTPException: 400 if invalid data provided
     """
     return await update_user_profile(db, user, data)
+
+
+@router.patch('/password',
+              status_code=status.HTTP_204_NO_CONTENT,
+              summary='Change user password')
+@limit("5/hour")
+async def change_user_password(
+        db: db_dependency,
+        user: current_active_user_dependency,
+        password_data: UserChangePassword
+) -> None:
+    """
+    Change current user password.
+
+    Requires old password verification. New password must be different
+    from old password and meet security requirements.
+
+    Rate limit: 5 attempts per hour per IP address to prevent brute-force attacks.
+
+    Request body:
+    - old_password: Current password for verification
+    - new_password: New password (min 8 chars, letter + digit)
+
+    Returns:
+        204 No Content on success
+
+    Raises:
+        HTTPException: 400 if old password incorrect
+        HTTPException: 400 if new password same as old
+        HTTPException: 429 if rate limit exceeded
+    """
+    await change_password(db, user, password_data)
+    return None
