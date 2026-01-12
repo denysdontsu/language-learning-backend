@@ -24,7 +24,10 @@ async def update_or_create_user_language(
     If language doesn't exist:
     - Creates new entry with provided level (defaults to A1)
 
-    Optionally sets language as active learning language.
+    Auto-activation behavior:
+    - If make_active=True: sets this language as active
+    - If no active language exists: sets automatically
+    - Otherwise: adds language without activation
 
     Args:
         db: Database session
@@ -64,9 +67,11 @@ async def update_or_create_user_language(
                 if lang.language == language
             )
 
-    # Set as active learning language if requested
-    if data.make_active:
-        user = await get_user_by_id(db, user_id)
+    # Set as active if:
+        # Explicitly requested (make_active=True)
+        # User has no active language (first language)
+    user = await get_user_by_id(db, user_id)
+    if data.make_active or user.active_learning_language_id is None:
         await update_active_language(db, user, result.id)
 
     return result
