@@ -1,3 +1,5 @@
+from typing import Any
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
@@ -197,3 +199,30 @@ async def get_user_with_active_language(
             .where(User.id == user_id))
     user = await db.execute(stmt)
     return user.unique().scalar_one_or_none()
+
+
+async def update_user(
+        db: AsyncSession,
+        user: User,
+        update_data: dict[str, Any]
+) -> User:
+    """
+    Update user fields.
+
+    Updates only fields present in update_data dictionary.
+
+    Args:
+        db: Database session
+        user: User object to update
+        update_data: Dictionary with fields to update
+
+    Returns:
+        User: Updated user object with refreshed state
+    """
+    # Update only provided fields
+    for field, value in update_data.items():
+        setattr(user, field, value)
+
+    await db.commit()
+    await db.refresh(user)
+    return user
