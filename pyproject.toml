@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Backend API for a language learning platform."
 authors = [{ name = "Denys Dontsu", email = "dendontsi01@gmail.com" }]
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python =  ">=3.12,<4.0"
 
 dependencies = [
     "fastapi==0.118.0",
@@ -20,7 +20,7 @@ dependencies = [
     "argon2-cffi (>=25.1.0,<26.0.0)",
     "psycopg2 (>=2.9.11,<3.0.0)",
     "greenlet (>=3.3.0,<4.0.0)",
-    "limiter (>=0.5.0,<0.6.0)",
+    "slowapi (>=0.1.9,<0.2.0)",
 ]
 
 [tool.poetry]
