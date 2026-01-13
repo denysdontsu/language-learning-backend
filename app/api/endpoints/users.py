@@ -1,9 +1,8 @@
 from typing import Union
 
-from fastapi import APIRouter, status
-from limiter import limit
+from fastapi import APIRouter, status, Request
 
-from app.api.dependencies import db_dependency, current_active_user_dependency
+from app.api.dependencies import db_dependency, current_active_user_dependency, limiter
 from app.schemas.user import (
     UserBriefWithLang,
     UserBrief,
@@ -74,8 +73,9 @@ async def update_user_prof(
 @router.patch('/password',
               status_code=status.HTTP_204_NO_CONTENT,
               summary='Change user password')
-@limit("5/hour")
+@limiter.limit("5/hour")
 async def change_user_password(
+        request: Request,
         db: db_dependency,
         user: current_active_user_dependency,
         password_data: UserChangePassword
