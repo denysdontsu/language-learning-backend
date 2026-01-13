@@ -1,6 +1,6 @@
 from collections.abc import Sequence
 
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from  app.models.user_level_language import UserLevelLanguage
@@ -113,3 +113,26 @@ async def update_user_language(
     return user_language
 
 
+async def delete_learning_language(
+        db: AsyncSession,
+        user_id: int,
+        language: LanguageEnum
+) -> None:
+    """
+    Delete user language entry.
+
+    Args:
+        db: Database session
+        user_id: User ID
+        language: Language to delete
+
+    Returns:
+        None
+    """
+    stmt = (delete(UserLevelLanguage)
+            .where(
+        UserLevelLanguage.user_id == user_id,
+        UserLevelLanguage.language == language))
+
+    await db.execute(stmt)
+    await db.commit()

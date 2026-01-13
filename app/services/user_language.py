@@ -2,8 +2,12 @@ from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.crud.user import get_user_by_id, update_active_language
-from app.crud.user_language import get_all_user_languages, create_user_language, update_user_language
-from app.models import UserLevelLanguage
+from app.crud.user_language import (
+    get_all_user_languages,
+    create_user_language,
+    update_user_language,
+    delete_learning_language)
+from app.models import UserLevelLanguage, User
 from app.schemas.enums import LanguageEnum, LanguageLevelEnum
 from app.schemas.user_level_language import UserLanguageLevelUpdate
 
@@ -75,3 +79,57 @@ async def update_or_create_user_language(
         await update_active_language(db, user, result.id)
 
     return result
+
+
+async def delete_user_learning_language(
+        db: AsyncSession,
+        user: User,
+        language: LanguageEnum
+) -> None:
+    """
+    Remove language from user's learning list.
+
+    Validates that:
+    - Language exists in user's learning list
+    - Language is not the last one
+    - Language is not currently active
+
+    Args:
+        db: Database session
+        user: Current user
+        language: Language to remove
+
+    Raises:
+        HTTPException: 404 if language not found
+        HTTPException: 400 if last language
+        HTTPException: 400 if active language
+    """
+    # Get all user languages
+    user_languages = await get_all_user_languages(db, user.id)
+
+    # Find the language to delete
+    language_to_delete = next(
+        (lang for lang in user_languages if lang.language == language),
+        None)
+    if not language_to_delete:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f'Language {language.value} not found in learning list'
+        )
+
+    # Check if last language
+    if len(user_languages) == 1:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Cannot remove last language from learning list'
+        )
+
+    # Check if active learning language
+    if language_to_delete.id == user.active_learning_language_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Cannot remove active learning language. Set another language as active first.'
+        )
+
+    await delete_learning_language(db, user.id, language)
+
