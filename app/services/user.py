@@ -9,31 +9,30 @@ from app.crud.user import (
     get_user_by_email,
     get_user_by_username,
     update_user)
-from app.schemas.user import UserBriefWithLang, UserBrief, UserUpdate, UserChangePassword
+from app.schemas.user import UserUpdate, UserChangePassword
 
 
 async def get_user_profile(
         db: AsyncSession,
         user: User
-) -> UserBriefWithLang | UserBrief:
+) -> User:
     """
-    Get user profile, optionally with active learning language.
+    Get user profile with active learning language relationship loaded.
 
-    If user has no active learning language, returns basic profile (UserBrief).
-    If user has active language, loads it and returns full profile (UserBriefWithLang).
+    Eagerly loads active_learning_language relationship using joinedload
+    to avoid N+1 queries. User object is already authenticated and exists,
+    but this function ensures relationship is loaded.
 
     Args:
         db: Database session
         user: Current user from authentication
 
     Returns:
-        UserBrief: If user has no active learning language
-        UserBriefWithLang: If user has active learning language set
-    """
-    # No active language - return basic profile
-    if not user.active_learning_language_id:
-         return UserBrief.model_validate(user)
+        User: User object with active_learning_language relationship loaded
 
+    Raises:
+        HTTPException: 404 if user not found (defensive check)
+    """
     # Load user with active language relationship
     user_with_lang = await get_user_with_active_language(db, user.id)
 
@@ -42,36 +41,39 @@ async def get_user_profile(
             status_code=status.HTTP_404_NOT_FOUND,
             detail='User not found'
         )
-    # Return full profile with language
-    return UserBriefWithLang.model_validate(user_with_lang)
+    return user_with_lang
 
 
 async def update_user_profile(
         db: AsyncSession,
         user: User,
         data: UserUpdate
-) -> UserBrief:
+) -> User:
     """
     Update user profile with validation.
+
+    Validates email and username uniqueness before update.
+    Only updates fields provided in request (exclude_unset).
+    Handles database integrity errors (NOT NULL, UNIQUE constraints).
 
     Args:
         db: Database session
         user: Current user (from authentication)
-        data: Fields to update
+        data: Fields to update (email, name, username, native_language)
 
     Returns:
-        UserBrief: Updated user profile
+        User: Updated user object
 
     Raises:
         HTTPException: 409 if email or username already taken
         HTTPException: 400 if invalid data or database constraint violation
         HTTPException: 500 if unknown database error
     """
-    # Extract fields
+    # Extract only provided fields
     update_dict = data.model_dump(exclude_unset=True)
 
     if not update_dict:
-        return UserBrief.model_validate(user)
+        return user # No changes requested
 
     # Email uniqueness validation
     if 'email' in update_dict:
@@ -89,6 +91,7 @@ async def update_user_profile(
                 status_code=status.HTTP_409_CONFLICT,
                 detail='Username already taken'
             )
+
     # Update with error handling
     try:
         result = await update_user(db, user, update_dict)
@@ -112,7 +115,7 @@ async def update_user_profile(
                 detail='Database error occurred'
             )
 
-    return UserBrief.model_validate(result)
+    return result
 
 
 async def change_password(

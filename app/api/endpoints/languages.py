@@ -19,7 +19,7 @@ router = APIRouter(prefix='/users/me/languages', tags=['Languages'])
 async def get_learning_languages(
         db: db_dependency,
         user: current_active_user_dependency
-):
+) -> list[UserLanguageBrief]:
     """
     Get all languages user is currently learning.
 
@@ -28,9 +28,10 @@ async def get_learning_languages(
     Returns:
         list[UserLanguageBrief]: List of languages with proficiency levels (may be empty)
     """
-    languages = await get_all_user_languages(db, user.id)
+    languages_orm = await get_all_user_languages(db, user.id)
 
-    return languages
+    # Serialize ORM list to Pydantic list
+    return [UserLanguageBrief.model_validate(lang) for lang in languages_orm]
 
 
 @router.post(
@@ -44,7 +45,7 @@ async def update_or_create_language(
         user: current_active_user_dependency,
         language: LanguageEnum,
         data: UserLanguageLevelUpdate
-):
+) -> UserLanguageBrief:
     """
     Add new language to learning list or update existing one.
 
@@ -55,7 +56,9 @@ async def update_or_create_language(
     If language not in learning list:
     - Adds language with specified level (defaults to A1)
 
-    Can optionally set language as active learning language.
+    Active language behavior:
+        - Set make_active=true to explicitly activate
+        - Auto-activates if user has no active language (first language)
 
     Args:
         db: Database session dependency
@@ -66,12 +69,13 @@ async def update_or_create_language(
     Returns:
         UserLanguageBrief: Created or updated language entry (201 Created)
     """
-    return await update_or_create_user_language(
+    language_orm = await update_or_create_user_language(
         db,
         user.id,
         language,
         data
     )
+    return UserLanguageBrief.model_validate(language_orm)
 
 
 @router.delete(

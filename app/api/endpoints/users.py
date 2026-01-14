@@ -13,7 +13,7 @@ from app.services.user import (
     update_user_profile,
     change_password)
 
-router = APIRouter(prefix='/users/me', tags=['Users']) # или правильнее User?
+router = APIRouter(prefix='/users/me', tags=['Users'])
 
 @router.get('/',
             response_model= Union[UserBriefWithLang, UserBrief],
@@ -21,7 +21,7 @@ router = APIRouter(prefix='/users/me', tags=['Users']) # или правильн
 async def get_current_user(
         db: db_dependency,
         user: current_active_user_dependency
-):
+) -> Union[UserBriefWithLang, UserBrief]:
     """
     Get current authenticated user profile.
 
@@ -37,7 +37,13 @@ async def get_current_user(
     Returns:
         UserBriefWithLang | UserBrief: User profile
     """
-    return await get_user_profile(db, user)
+    user_orm = await get_user_profile(db, user)
+
+    # Conditional serialization based on active language presence
+    if user_orm.active_learning_language_id:
+        return UserBriefWithLang.model_validate(user_orm)
+    else:
+        return UserBrief.model_validate(user_orm)
 
 
 @router.patch('/',
@@ -67,7 +73,8 @@ async def update_user_prof(
         HTTPException: 409 if email or username already taken
         HTTPException: 400 if invalid data provided
     """
-    return await update_user_profile(db, user, data)
+    user_orm = await update_user_profile(db, user, data)
+    return UserBrief.model_validate(user_orm)
 
 
 @router.patch('/password',
