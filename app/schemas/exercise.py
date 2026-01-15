@@ -100,7 +100,13 @@ class ExerciseCreate(ExerciseBase):
 
 
 class ExerciseUpdate(BaseModel):
-    """Schema for update exercise (for admin)."""
+    """Schema for update exercise (for admin).
+
+    Note:
+    Cross-field validations are skipped because fields are optional.
+    Validation must be applied after combining update data
+    with the persisted exercise.
+    """
     # Base info
     topic: str | None = Field(None, min_length=1, max_length=100)
     difficult_level: LanguageLevelEnum | None = None

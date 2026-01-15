@@ -118,3 +118,10 @@ class LanguageEnum(str, Enum):
         )
 
 LanguageEnum.validate_properties()
+
+
+class ExerciseStatusEnum(str, Enum):
+    """Available exercise status."""
+    CORRECT = 'correct'
+    INCORRECT = 'incorrect'
+    SKIP = 'skip'

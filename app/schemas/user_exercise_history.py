@@ -1,9 +1,12 @@
 from datetime import datetime
+from typing import Self
 
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, model_validator
 
+from app.schemas.enums import ExerciseStatusEnum
 from app.schemas.exercise import ExerciseBrief
 from app.schemas.user import UserBrief
+from app.utils.validators import validate_exercise_status
 
 
 class ExerciseHistoryBase(BaseModel):
@@ -12,31 +15,49 @@ class ExerciseHistoryBase(BaseModel):
     exercise_id: int
 
     # Base info
-    user_answer: str = Field(min_length=1)
-    is_correct: bool
-    time_spent_seconds: int = Field(gt=0)
+    user_answer: str | None = None
+    status: ExerciseStatusEnum
+    time_spent_seconds: int = Field(ge=0)
 
 
 class ExerciseHistoryCreate(ExerciseHistoryBase):
     """Schema for crete user exercise history."""
     model_config = ConfigDict(
         json_schema_extra={
-            'example': {
-                'exercise_id': 2,
-                'user_answer': 'go',
-                'is_correct': False,
-                'time_spent_seconds': 43,
-            }
+            'example': [
+                {
+                    'exercise_id': 2,
+                    'user_answer': 'go',
+                    'status': 'incorrect',
+                    'time_spent_seconds': 43,
+                },
+                {
+                    'exercise_id': 2,
+                    'user_answer': None,
+                    'status': 'skip',
+                    'time_spent_seconds': 43,
+                }
+            ]
         }
     )
 
+    @model_validator('after')
+    def validate_status(self) -> Self:
+        """Validate that status and user_answer are consistent."""
+        validate_exercise_status(self.status, self.user_answer)
+        return self
+
 
 class ExerciseHistoryUpdate(BaseModel):
-    """Schema for update user exercise history (for admin)."""
+    """Schema for update user exercise history (for admin).
+
+    Note: No status validation here since fields are optional
+    and can be updated independently.
+    """
     # Base info
     user_answer: str | None
-    is_correct: bool | None
-    time_spent_seconds: int | None = Field(None, gt=0)
+    status: ExerciseStatusEnum | None
+    time_spent_seconds: int | None = Field(None, ge=0)
 
     # Metadata
     completed_at: datetime | None
@@ -45,7 +66,7 @@ class ExerciseHistoryUpdate(BaseModel):
         json_schema_extra={
             'example': {
                 'user_answer': 'went',
-                'is_correct': True,
+                'status': 'correct',
                 'time_spent_seconds': 88,
                 'completed_at': '2024-12-20T12:30:00Z'
             }
@@ -67,7 +88,7 @@ class ExerciseHistoryBrief(ExerciseHistoryBase):
                 'user_id': 1,
                 'exercise_id': 1,
                 'user_answer': 'went',
-                'is_correct': True,
+                'status': 'correct',
                 'time_spent_seconds': 43,
                 'completed_at': '2024-12-20T12:30:00Z'
             }
@@ -81,8 +102,8 @@ class ExerciseHistoryRead(BaseModel):
     user: UserBrief
     exercise: ExerciseBrief
     user_answer: str
-    is_correct: bool
-    time_spent_seconds: int = Field(gt=0)
+    status: ExerciseStatusEnum
+    time_spent_seconds: int = Field(ge=0)
     completed_at: datetime
 
     model_config = ConfigDict(
@@ -106,7 +127,7 @@ class ExerciseHistoryRead(BaseModel):
                     'answer_language': 'Ukrainian'
                 },
                 'user_answer': 'went',
-                'is_correct': True,
+                'status': 'correct',
                 'time_spent_seconds': 43,
                 'completed_at': '2024-12-20T12:30:00Z'
             }

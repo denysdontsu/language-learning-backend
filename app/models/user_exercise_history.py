@@ -1,8 +1,9 @@
-from sqlalchemy import BigInteger, Boolean, Integer, Index, ForeignKey, CheckConstraint, Text
+from sqlalchemy import BigInteger, Integer, Index, ForeignKey, CheckConstraint, Text, Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.connection import Base
 from app.db.column_types import bigint_pk, user_fk, created_at
+from app.schemas.enums import ExerciseStatusEnum
 
 
 class UserExerciseHistory(Base):
@@ -16,8 +17,8 @@ class UserExerciseHistory(Base):
     exercise_id: Mapped[int] = mapped_column(BigInteger, ForeignKey('exercises.id', ondelete='RESTRICT'), nullable=False)
 
     # Base info
-    user_answer: Mapped[str] = mapped_column(Text, nullable=False)
-    is_correct: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    user_answer: Mapped[str] = mapped_column(Text)
+    status: Mapped[ExerciseStatusEnum] = mapped_column(SQLEnum(ExerciseStatusEnum, name='exercise_status'), nullable=False)
     time_spent_seconds: Mapped[int] = mapped_column(Integer, nullable=False)
 
     # Metadata
@@ -43,4 +44,11 @@ class UserExerciseHistory(Base):
               'exercise_id'),
         CheckConstraint('time_spent_seconds >= 0',
                         name='positive_time'),
+        CheckConstraint(
+            """
+            ((status = 'skip') AND user_answer IS NULL)
+            OR
+            ((status IN ('incorrect', 'correct')) AND user_answer IS NOT NULL)
+            """,
+        name='check_status')
     )

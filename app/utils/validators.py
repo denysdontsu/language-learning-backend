@@ -2,7 +2,7 @@ import re
 
 from pydantic_core.core_schema import ValidationInfo
 
-from app.schemas.enums import ExerciseTypeEnum
+from app.schemas.enums import ExerciseTypeEnum, ExerciseStatusEnum
 from app.schemas.common import Options
 
 # Reserved values that cannot be used in string fields
@@ -145,3 +145,31 @@ def validate_string_field(
         raise ValueError(f'{info.field_name} cannot be "{v}" (reserved value)')
 
     return v
+
+
+def validate_exercise_status(
+        status: ExerciseStatusEnum | None,
+        user_answer: str | None
+) -> None:
+    """
+    Validate consistency between exercise status and user answer.
+
+    Business rules:
+    - SKIP status requires empty user_answer (None or empty string)
+    - CORRECT/INCORRECT status requires non-empty user_answer
+
+    Args:
+        status: Exercise completion status (correct/incorrect/skip)
+        user_answer: User's submitted answer
+
+    Raises:
+        ValueError: If status and user_answer are inconsistent
+    """
+    # Normalize empty string to None for consistent checking
+    answer = user_answer.strip() if user_answer else None
+
+    if answer and status == ExerciseStatusEnum.SKIP:
+        raise ValueError("'user_answer' must be empty for 'skip' status")
+    elif not answer and status in (ExerciseStatusEnum.CORRECT, ExerciseStatusEnum.INCORRECT):
+        raise ValueError(f"'user_answer' is required for '{status.value}' status")
+
