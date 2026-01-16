@@ -42,7 +42,7 @@ class User(Base):
         cascade='all, delete-orphan'
     )
 
-    active_learning_language: Mapped['UserLevelLanguage'] = relationship(
+    active_learning_language: Mapped['UserLevelLanguage | None'] = relationship(
         'UserLevelLanguage',
         foreign_keys=[active_learning_language_id],
         viewonly=True
