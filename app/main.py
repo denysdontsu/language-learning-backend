@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from slowapi import _rate_limit_exceeded_handler # noqa
 from slowapi.errors import RateLimitExceeded
 
-from app.api.endpoints import auth, users, languages
+from app.api.endpoints import auth, users, languages, exercises
 from app.core.config import settings
 from app.api.dependencies import limiter
 
@@ -53,3 +53,4 @@ async def health_check():
 app.include_router(auth.router)
 app.include_router(languages.router)
 app.include_router(users.router)
+app.include_router(exercises.router)
