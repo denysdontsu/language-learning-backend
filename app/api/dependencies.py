@@ -9,7 +9,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.connection import async_session_maker
 from app.core.security import decode_access_token, oauth2_scheme
 from app.models.user import User
-from app.crud.user import get_user_by_id
+from app.crud.user import get_user_by_id, get_user_with_active_language
+
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """
@@ -98,7 +99,8 @@ current_active_user_dependency = Annotated[User, Depends(get_current_active_user
 
 
 async def require_active_language(
-        current_user: current_active_user_dependency
+        current_user: current_active_user_dependency,
+        db: db_dependency
 ) -> User:
     """
     Verify user has set an active learning language.
@@ -107,19 +109,30 @@ async def require_active_language(
 
     Args:
         current_user: Active authenticated user
+        db: Database session
 
     Returns:
-        User: User with active learning language set
+        User with loaded active_learning_language relationship
 
     Raises:
         HTTPException: 400 if no active learning language
+        HTTPException: 500 if failed to load user data
     """
     if not current_user.active_learning_language_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail='User must have at least one active learning language'
         )
-    return current_user
+
+    user_with_lang = await get_user_with_active_language(db, current_user.id)
+
+    if not user_with_lang:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail='Failed to load user data'
+        )
+
+    return user_with_lang
 
 user_active_language_dependency = Annotated[User, Depends(require_active_language)]
 """
