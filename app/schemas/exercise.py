@@ -1,11 +1,15 @@
 from datetime import datetime
 from typing import Self
 
-from pydantic import BaseModel, Field, model_validator, ConfigDict, computed_field
+from pydantic import BaseModel, Field, model_validator, ConfigDict, computed_field, field_validator
 
-from app.schemas.enums import ExerciseTypeEnum, LanguageLevelEnum, LanguageEnum
+from app.schemas.enums import ExerciseTypeEnum, LanguageLevelEnum, LanguageEnum, ExerciseStatusEnum
 from app.schemas.common import Options
-from app.utils.validators import validate_question_translation_pair, validate_exercise_options, validate_translation_usage
+from app.utils.validators import (
+    validate_question_translation_pair,
+    validate_exercise_options,
+    validate_translation_usage,
+    normalize_topic)
 
 
 class ExerciseBase(BaseModel):
@@ -32,12 +36,18 @@ class ExerciseCreate(ExerciseBase):
     # Options (for type: 'multiple_choice')
     options: Options | None = None
 
+    @field_validator('topic', mode='before')
+    @classmethod
+    def validate_topic(cls, v):
+        """Normalize topic to title case format."""
+        return normalize_topic(v)
+
     model_config = ConfigDict(
         json_schema_extra={
             'examples': [
                 # Example 1: Sentence translation
                 {
-                    'topic': 'Present Perfect',
+                    'topic': 'Present perfect',
                     'difficult_level': 'B1',
                     'type': 'sentence_translation',
                     'options': None,
@@ -50,7 +60,7 @@ class ExerciseCreate(ExerciseBase):
                 },
                 # Example 2: Multiple choice
                 {
-                    'topic': 'Past Simple Verbs',
+                    'topic': 'Past simple verbs',
                     'difficult_level': 'A2',
                     'type': 'multiple_choice',
                     'options': {
@@ -125,6 +135,11 @@ class ExerciseUpdate(BaseModel):
     question_translation: str | None = Field(None, min_length=1)
     question_translation_language: LanguageEnum | None = None
 
+    @field_validator('topic', mode='before')
+    @classmethod
+    def validate_topic(cls, v):
+        """Normalize topic to title case format."""
+        return normalize_topic(v)
 
     model_config = ConfigDict(
         json_schema_extra={
@@ -144,7 +159,7 @@ class ExerciseUpdate(BaseModel):
                 },
                 # Example 2: Update question text
                 {
-                    'topic': 'Present Perfect',
+                    'topic': 'Present perfect',
                     'difficult_level': None,
                     'type': None,
                     'options': None,
@@ -160,13 +175,12 @@ class ExerciseUpdate(BaseModel):
     )
 
 
-class ExerciseQuestion(BaseModel):
-    """Schema for question response."""
+class ExerciseQuestion(ExerciseBase):
+    """Schema for exercise question to display to user."""
     id: int
-    type: ExerciseTypeEnum
-    question_text: str
     options: Options | None
-
+    question_text: str
+    
     @computed_field
     @property
     def instruction(self) -> str:
@@ -176,18 +190,23 @@ class ExerciseQuestion(BaseModel):
         use_enum_values=True,
         from_attributes=True,
         json_schema_extra={
-            'example': [
+            'examples': [
                 # Example 1: Translation exercise
                 {
                     'id': 1,
-                    'type': 'Translate the following text',
+                    'topic': 'Present perfect',
+                    'difficult_level': 'B1',
+                    'type': 'sentence_translation',
                     'question_text': 'I have lived here for 5 years',
                     'options': None,
+                    'instruction': 'Translate the following text'
                 },
                 # Example 2: Multiple choice
                 {
                     'id': 2,
-                    'type': 'Choose the correct answer from the options below',
+                    'topic': 'Past simple verbs',
+                    'difficult_level': 'A2',
+                    'type': 'multiple_choice',
                     'question_text': 'Yesterday I ___ to the store',
                     'options': {
                         'A': 'go',
@@ -195,14 +214,18 @@ class ExerciseQuestion(BaseModel):
                         'C': 'gone',
                         'D': 'going'
                     },
+                    'instruction': 'Choose the correct answer from the options below'
                 },
-                # Example 3: Fill in the blank
+                # Example 3: Fill blank
                 {
                     'id': 3,
-                    'type': 'Fill in the blank with the correct word',
+                    'topic': 'Articles',
+                    'difficult_level': 'A1',
+                    'type': 'fill_blank',
                     'question_text': 'I have ___ apple',
                     'options': None,
-                }
+                    'instruction': 'Fill in the blank with the correct word'
+                },
             ]
         }
     )
@@ -211,25 +234,25 @@ class ExerciseQuestion(BaseModel):
 class ExerciseUserAnswer(BaseModel):
     """Schema for user answer submission."""
     user_answer: str
-    time_spend_seconds: int = Field(gt=0, description="Time spent answering (seconds)")
+    time_spent_seconds: int = Field(gt=0, description="Time spent answering (seconds)")
 
     model_config = ConfigDict(
         json_schema_extra={
-            'example': [
+            'examples': [
                 # Example 1: Translation exercise
                 {
                     'user_answer': 'Я живу тут 5 років',
-                    'time_spend_seconds': 44
+                    'time_spent_seconds': 44
                 },
                 # Example 2: Multiple choice
                 {
                     'user_answer': 'went',
-                    'time_spend_seconds': 13
+                    'time_spent_seconds': 13
                 },
                 # Example 3: Fill in the blank
                 {
                     'user_answer': 'an',
-                    'time_spend_seconds': 22
+                    'time_spent_seconds': 22
                 }
             ]
         }
@@ -243,6 +266,7 @@ class ExerciseCorrectAnswer(BaseModel):
     correct_answer: str = Field(min_length=1)
     user_answer: str
     is_correct: bool
+    status: ExerciseStatusEnum
     question_translation: str | None
     explanation: str | None = None
 
@@ -250,7 +274,7 @@ class ExerciseCorrectAnswer(BaseModel):
         use_enum_values=True,
         from_attributes=True,
         json_schema_extra={
-            'example': [
+            'examples': [
                 {
                     # Example 1: Translation exercise
                     'id': 1,
@@ -258,6 +282,7 @@ class ExerciseCorrectAnswer(BaseModel):
                     'correct_answer': 'Я живу тут 5 років',
                     'user_answer': 'Я живу тут 5 років',
                     'is_correct': True,
+                    'status': 'correct',
                     'question_translation': None,
                     'explanation': None
                 },
@@ -268,6 +293,7 @@ class ExerciseCorrectAnswer(BaseModel):
                     'correct_answer': 'went',
                     'user_answer': 'go',
                     'is_correct': False,
+                    'status': 'incorrect',
                     'question_translation': 'Вчора я пішов у магазин',
                     'explanation': None
                 },
@@ -278,6 +304,7 @@ class ExerciseCorrectAnswer(BaseModel):
                     'correct_answer': 'an',
                     'user_answer': 'a',
                     'is_correct': False,
+                    'status': 'incorrect',
                     'question_translation': 'У мене є яблуко',
                     'explanation': None
                 }
@@ -301,7 +328,6 @@ class ExerciseFilter(BaseModel):
             }
         }
     )
-
 
 
 class ExerciseBrief(ExerciseBase):
@@ -331,11 +357,14 @@ class ExerciseBrief(ExerciseBase):
         json_schema_extra={
             'example': {
                 'id': 1,
-                'topic': 'Present Perfect',
+                'topic': 'Present perfect',
                 'difficult_level': 'B1',
-                'type': 'Sentence translation',
-                'question_language': 'English',
-                'answer_language': 'Ukrainian'
+                'type': 'sentence_translation',
+                'question_language': 'en',
+                'answer_language': 'uk',
+                'question_language_full_name': 'English',
+                'answer_language_full_name': 'Ukrainian',
+                'type_display_name': 'Sentence translation'
             }
         }
     )
@@ -375,27 +404,34 @@ class ExerciseRead(ExerciseBrief):
                 # Example 1: Translation exercise
                 {
                     'id': 1,
-                    'topic': 'Present Perfect',
+                    'topic': 'Present perfect',
                     'difficult_level': 'B1',
                     'type': 'sentence_translation',
+                    'type_display_name': 'Sentence translation',
                     'question_language': 'en',
+                    'question_language_full_name': 'English',
                     'answer_language': 'uk',
+                    'answer_language_full_name': 'Ukrainian',
                     'options': None,
                     'question_text': 'I have lived here for 5 years',
                     'correct_answer': 'Я живу тут 5 років',
                     'question_translation': None,
                     'question_translation_language': None,
+                    'question_translation_full_name': None,
                     'added_at': '2024-12-20T12:30:00Z',
                     'is_active': True
                 },
                 # Example 2: Multiple choice
                 {
                     'id': 2,
-                    'topic': 'Past Simple Verbs',
+                    'topic': 'Past simple verbs',
                     'difficult_level': 'A2',
                     'type': 'multiple_choice',
+                    'type_display_name': 'Multiple choice',
                     'question_language': 'en',
+                    'question_language_full_name': 'English',
                     'answer_language': 'en',
+                    'answer_language_full_name': 'English',
                     'options': {
                         'A': 'go',
                         'B': 'went',
@@ -405,23 +441,28 @@ class ExerciseRead(ExerciseBrief):
                     'question_text': 'Yesterday I ___ to the store',
                     'correct_answer': 'went',
                     'question_translation': 'Вчора я пішов у магазин',
-                    'question_translation_language': 'Ukrainian',
+                    'question_translation_language': 'uk',
+                    'question_translation_full_name': 'Ukrainian',
                     'added_at': '2024-12-20T12:30:00Z',
                     'is_active': True
                 },
-                # Example 2: Fill blank
+                # Example 3: Fill blank
                 {
                     'id': 3,
                     'topic': 'Articles',
                     'difficult_level': 'A1',
                     'type': 'fill_blank',
+                    'type_display_name': 'Fill in the blank', # В Enum 'Fill in the blank'
                     'question_language': 'en',
+                    'question_language_full_name': 'English',
                     'answer_language': 'en',
+                    'answer_language_full_name': 'English',
                     'options': None,
                     'question_text': 'I have ___ apple',
                     'correct_answer': 'an',
                     'question_translation': 'У мене є яблуко',
-                    'question_translation_language': 'Ukrainian',
+                    'question_translation_language': 'uk',
+                    'question_translation_full_name': 'Ukrainian',
                     'added_at': '2024-12-20T12:30:00Z',
                     'is_active': True
                 },

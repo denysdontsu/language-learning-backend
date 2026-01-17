@@ -173,3 +173,28 @@ def validate_exercise_status(
     elif not answer and status in (ExerciseStatusEnum.CORRECT, ExerciseStatusEnum.INCORRECT):
         raise ValueError(f"'user_answer' is required for '{status.value}' status")
 
+
+def normalize_topic(topic: str) -> str:
+    """
+    Normalize topic string to title case.
+
+    Rules:
+    - Strip whitespace
+    - First letter uppercase, rest lowercase
+    - Preserves multi-word topics (e.g., "past SIMPLE" → "Past simple")
+
+    Args:
+        topic: Raw topic string
+
+    Returns:
+        Normalized topic string
+
+    Raises:
+        ValueError: If topic is empty after stripping
+    """
+    topic_strip = topic.strip()
+    if not topic_strip:
+        raise ValueError("Topic cannot be empty or whitespace only")
+
+    # Capitalize only first letter, rest lowercase
+    return topic_strip[0].upper() + topic_strip[1:].lower()
