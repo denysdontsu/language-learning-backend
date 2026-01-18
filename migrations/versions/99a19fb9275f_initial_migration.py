@@ -1,4 +1,4 @@
-"""empty message
+"""Initial migration
 
 Revision ID: 99a19fb9275f
 Revises: 
@@ -28,11 +28,11 @@ def upgrade() -> None:
     sa.Column('type', sa.Enum('multiple_choice', 'sentence_translation', name='exercise_type'), nullable=False),
     sa.Column('options', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
     sa.Column('question_text', sa.Text(), nullable=False),
-    sa.Column('question_language', sa.Enum('UK', 'EN', 'DE', name='language'), nullable=False, comment='Language code in ISO 639-1" format'),
+    sa.Column('question_language', sa.Enum('uk', 'en', 'de', name='language'), nullable=False, comment='Language code in ISO 639-1" format'),
     sa.Column('correct_answer', sa.Text(), nullable=False),
-    sa.Column('answer_language', sa.Enum('UK', 'EN', 'DE', name='language'), nullable=False, comment='Language code in ISO 639-1" format'),
+    sa.Column('answer_language', sa.Enum('uk', 'en', 'de', name='language'), nullable=False, comment='Language code in ISO 639-1" format'),
     sa.Column('correct_answer_translation', sa.Text(), nullable=True),
-    sa.Column('answer_translation_language', sa.Enum('UK', 'EN', 'DE', name='language'), nullable=True, comment='Language code in ISO 639-1" format'),
+    sa.Column('answer_translation_language', sa.Enum('uk', 'en', 'de', name='language'), nullable=True, comment='Language code in ISO 639-1" format'),
     sa.Column('added_at', sa.DateTime(timezone=True), server_default=sa.text("TIMEZONE('utc', now())"), nullable=False, comment='Record creation date and time'),
     sa.Column('is_active', sa.Boolean(), nullable=False),
     sa.PrimaryKeyConstraint('id')
@@ -43,7 +43,7 @@ def upgrade() -> None:
     sa.Column('email', sa.String(length=255), nullable=False),
     sa.Column('name', sa.String(length=100), nullable=False),
     sa.Column('username', sa.String(length=50), nullable=False),
-    sa.Column('native_language', sa.Enum('UK', 'EN', 'DE', name='language'), nullable=False, comment='Language code in ISO 639-1" format'),
+    sa.Column('native_language', sa.Enum('uk', 'en', 'de', name='language'), nullable=False, comment='Language code in ISO 639-1" format'),
     sa.Column('hashed_password', sa.Text(), nullable=False),
     sa.Column('role', sa.String(length=20), nullable=False),
     sa.Column('is_active', sa.Boolean(), nullable=False),
@@ -70,7 +70,7 @@ def upgrade() -> None:
     op.create_table('user_level_languages',
     sa.Column('id', sa.BigInteger(), autoincrement=True, nullable=False, comment='Surrogate key of the table'),
     sa.Column('user_id', sa.BigInteger(), nullable=False, comment='Reference to user'),
-    sa.Column('language', sa.Enum('UK', 'EN', 'DE', name='language'), nullable=False, comment='Language code in ISO 639-1" format'),
+    sa.Column('language', sa.Enum('uk', 'en', 'de', name='language'), nullable=False, comment='Language code in ISO 639-1" format'),
     sa.Column('level', sa.Enum('A1', 'A2', 'B1', 'B2', 'C1', 'C2', name='language_level'), nullable=False, comment='CEFR Language levels'),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text("TIMEZONE('utc', now())"), nullable=False, comment='Record creation date and time'),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),

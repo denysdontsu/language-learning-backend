@@ -46,15 +46,8 @@ def upgrade():
         """
     )
 
-    # Delete old column
-    op.drop_column('user_exercise_history', 'is_active')
-
 
 def downgrade():
-    # Add back old column
-    op.add_column('user_exercise_history',
-                  sa.Column('is_active', sa.BOOLEAN(), autoincrement=False, nullable=False))
-
     # Delete check constrain 'check_status'
     op.drop_constraint(
         'check_status',
