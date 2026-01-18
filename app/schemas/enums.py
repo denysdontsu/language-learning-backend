@@ -125,3 +125,23 @@ class ExerciseStatusEnum(str, Enum):
     CORRECT = 'correct'
     INCORRECT = 'incorrect'
     SKIP = 'skip'
+
+    __EXCLUDE_AT = {
+        'correct': 336, # 14 days
+        'skip': 72,  # 3 days
+        'incorrect': 0
+    }
+
+    @property
+    def exclude_at_hours(self) -> int:
+        """Get exclusion period in hours for this status."""
+        return self.__EXCLUDE_AT[self.value]
+
+    @classmethod
+    def validate_properties(cls) -> None:
+        """Validates that internal dictionaries match enum values."""
+        return validate_enum_dict_properties(
+            ExerciseStatusEnum,
+            EXCLUDE_AT=cls.__EXCLUDE_AT)
+
+ExerciseStatusEnum.validate_properties()
