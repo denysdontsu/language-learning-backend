@@ -50,7 +50,11 @@ user_fk = Annotated[
 language = Annotated[
     LanguageEnum,
     mapped_column(
-        SQLEnum(LanguageEnum, name='language'),
+        SQLEnum(
+            LanguageEnum,
+            name='language',
+            values_callable=lambda enum: [e.value for e in enum]
+        ),
         nullable=False,
         comment='Language code in ISO 639-1" format'
     )
@@ -59,7 +63,11 @@ language = Annotated[
 level = Annotated[
     LanguageLevelEnum,
     mapped_column(
-        SQLEnum(LanguageLevelEnum, name='language_level'),
+        SQLEnum(
+            LanguageLevelEnum,
+            name='language_level',
+            values_callable=lambda enum: [e.value for e in enum]
+        ),
         nullable=False,
         comment='CEFR Language levels'
     )

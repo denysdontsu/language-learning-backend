@@ -17,8 +17,14 @@ class UserExerciseHistory(Base):
     exercise_id: Mapped[int] = mapped_column(BigInteger, ForeignKey('exercises.id', ondelete='RESTRICT'), nullable=False)
 
     # Base info
-    user_answer: Mapped[str] = mapped_column(Text)
-    status: Mapped[ExerciseStatusEnum] = mapped_column(SQLEnum(ExerciseStatusEnum, name='exercise_status'), nullable=False)
+    user_answer: Mapped[str] = mapped_column(Text, nullable=True)
+    status: Mapped[ExerciseStatusEnum] = mapped_column(
+        SQLEnum(
+            ExerciseStatusEnum,
+            name='exercise_status',
+            values_callable=lambda enum: [e.value for e in enum]
+        ),
+        nullable=False)
     time_spent_seconds: Mapped[int] = mapped_column(Integer, nullable=False)
 
     # Metadata

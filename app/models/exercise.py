@@ -16,7 +16,13 @@ class Exercise(Base):
     # Basic info
     topic: Mapped[str] = mapped_column(String(100), nullable=False)
     difficult_level: Mapped[level]
-    type: Mapped[ExerciseTypeEnum] = mapped_column(SQLEnum(ExerciseTypeEnum, name='exercise_type'), nullable=False)
+    type: Mapped[ExerciseTypeEnum] = mapped_column(
+        SQLEnum(
+            ExerciseTypeEnum,
+            name='exercise_type',
+            values_callable=lambda enum: [e.value for e in enum]
+        ),
+        nullable=False)
     options: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
 
     # Question
@@ -29,7 +35,13 @@ class Exercise(Base):
 
     # Translation (optional)
     question_translation: Mapped[str | None] = mapped_column(Text, nullable=True)
-    question_translation_language: Mapped[language | None] = mapped_column(SQLEnum(LanguageEnum, name='language'), nullable=True)
+    question_translation_language: Mapped[language | None] = mapped_column(
+        SQLEnum(
+            LanguageEnum,
+            name='language',
+            values_callable=lambda enum: [e.value for e in enum]
+        ),
+        nullable=True)
 
     # Metadata
     added_at: Mapped[created_at]
