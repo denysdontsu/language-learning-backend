@@ -12,6 +12,7 @@ from app.utils.validators import validate_exercise_status
 class ExerciseHistoryBase(BaseModel):
     """Base user exercise history fields."""
     # Foreign Key
+    user_id: int
     exercise_id: int
 
     # Base info
@@ -26,12 +27,14 @@ class ExerciseHistoryCreate(ExerciseHistoryBase):
         json_schema_extra={
             'example': [
                 {
+                    'user_is': 1,
                     'exercise_id': 2,
                     'user_answer': 'go',
                     'status': 'incorrect',
                     'time_spent_seconds': 43,
                 },
                 {
+                    'user_is': 1,
                     'exercise_id': 2,
                     'user_answer': None,
                     'status': 'skip',
@@ -77,7 +80,6 @@ class ExerciseHistoryUpdate(BaseModel):
 class ExerciseHistoryBrief(ExerciseHistoryBase):
     """Brief schema for user exercise history response."""
     id: int
-    user_id: int
     completed_at: datetime
 
     model_config = ConfigDict(
