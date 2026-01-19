@@ -1,10 +1,12 @@
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.crud.exercise import get_exercise
+from app.crud.exercise import get_exercise, get_exercise_by_id
+from app.crud.exercise_history import create_user_history
 from app.models import User
-from app.schemas.enums import LanguageLevelEnum
-from app.schemas.exercise import ExerciseQuestion
+from app.schemas.enums import LanguageLevelEnum, ExerciseStatusEnum
+from app.schemas.exercise import ExerciseQuestion, ExerciseUserAnswer, ExerciseCorrectAnswer
+from app.schemas.user_exercise_history import ExerciseHistoryCreate
 from app.utils.validators import normalize_topic
 
 
@@ -69,4 +71,73 @@ async def get_exercise_service(
     return  ExerciseQuestion.model_validate(exercise)
 
 
+async def check_and_save_submission(
+        db: AsyncSession,
+        user_id: int,
+        exercise_id: int,
+        data: ExerciseUserAnswer
+) -> ExerciseCorrectAnswer:
+    """
+    Check exercise answer and save submission to history.
 
+    Validates user's answer against correct answer, determines status,
+    and creates history record for spaced repetition tracking.
+
+    Args:
+        db: Database session
+        user_id: User ID submitting the answer
+        exercise_id: Exercise being answered
+        data: User's answer and time spent
+
+    Returns:
+        ExerciseCorrectAnswer with result and feedback
+
+    Raises:
+        HTTPException 404: If exercise not found
+    """
+    # Get exercise
+    exercise = await get_exercise_by_id(db, exercise_id)
+    if not exercise:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f'Exercise with id {exercise_id} not found'
+        )
+
+    # Normalize answers for comparison (strip whitespace, lowercase)
+    user_answer_normalized = data.user_answer.strip()
+    correct_answer_normalized = exercise.correct_answer.strip()
+
+    # Determine status and correctness
+    if not user_answer_normalized:
+        answer_status = ExerciseStatusEnum.SKIP
+        is_correct = False
+    elif user_answer_normalized.lower() == correct_answer_normalized.lower():
+        answer_status = ExerciseStatusEnum.CORRECT
+        is_correct = True
+    else:
+        answer_status = ExerciseStatusEnum.INCORRECT
+        is_correct = False
+
+    # Create history record
+    new_history = ExerciseHistoryCreate(
+        user_id=user_id,
+        exercise_id=exercise_id,
+        user_answer=data.user_answer if user_answer_normalized else None,
+        status=answer_status,
+        time_spent_seconds=data.time_spent_seconds
+    )
+    await create_user_history(db, new_history)
+
+    # Build response
+    response_model = ExerciseCorrectAnswer(
+        id=exercise.id,
+        question_text=exercise.question_text,
+        correct_answer=exercise.correct_answer,
+        user_answer=data.user_answer,
+        is_correct=is_correct,
+        status=answer_status,
+        question_translation=exercise.question_translation,
+        explanation=None # AI-generated explanation in language_app v2
+    )
+
+    return response_model

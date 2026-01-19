@@ -137,7 +137,16 @@ async def get_exercise_by_id(
         db: AsyncSession,
         exercise_id: int
 ) -> Exercise | None:
-    """"""
+    """
+    Get exercise by ID.
+
+    Args:
+        db: Database session
+        exercise_id: Exercise ID to retrieve
+
+    Returns:
+        Exercise if found, None otherwise
+    """
     stmt = (select(Exercise).where(
             Exercise.id == exercise_id
         )

@@ -1,10 +1,10 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, status
 
 from app.api.dependencies import user_active_language_dependency, db_dependency
 from app.crud.exercise import get_all_topics
 from app.schemas.enums import LanguageLevelEnum
-from app.schemas.exercise import ExerciseQuestion
-from app.services.exercise import get_exercise_service
+from app.schemas.exercise import ExerciseQuestion, ExerciseCorrectAnswer, ExerciseUserAnswer
+from app.services.exercise import get_exercise_service, check_and_save_submission
 
 router = APIRouter(prefix='/exercises', tags=['Exercises'])
 
@@ -37,3 +37,38 @@ async def get_exercise(
 ) -> ExerciseQuestion:
     """Get random exercise for practice."""
     return await get_exercise_service(db, user, topic, difficult_level, exclude_id)
+
+
+@router.post('/{exercise_id}/submit',
+              response_model=ExerciseCorrectAnswer,
+              status_code=status.HTTP_201_CREATED,
+              summary='Submit exercise answer')
+async def submit_exercise(
+        db: db_dependency,
+        user: user_active_language_dependency,
+        exercise_id: int,
+        data: ExerciseUserAnswer
+) -> ExerciseCorrectAnswer:
+    """
+    Submit user's answer for an exercise and save to history.
+
+    Validates the answer, determines correctness, and creates a new history
+    record. Returns immediate feedback with correct answer and explanation
+    (if available).
+
+    Path Parameters:
+    - exercise_id: ID of the exercise being answered
+
+    Request Body:
+    - user_answer: User's submitted answer
+    - time_spent_seconds: Time taken to answer (in seconds)
+
+    Returns:
+        Result with correct answer, user's answer, status, and optional explanation
+
+    Status Determination:
+    - correct: User answer matches correct answer exactly
+    - incorrect: User answer doesn't match but is not empty
+    - skip: User answer is empty or whitespace only
+    """
+    return await check_and_save_submission(db, user.id, exercise_id, data)
