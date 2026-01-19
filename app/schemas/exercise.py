@@ -1,7 +1,14 @@
 from datetime import datetime
 from typing import Self
 
-from pydantic import BaseModel, Field, model_validator, ConfigDict, computed_field, field_validator
+from pydantic import (
+    BaseModel,
+    Field,
+    ConfigDict,
+    field_validator,
+    model_validator,
+    computed_field,
+    )
 
 from app.schemas.enums import ExerciseTypeEnum, LanguageLevelEnum, LanguageEnum, ExerciseStatusEnum
 from app.schemas.common import Options
@@ -36,11 +43,27 @@ class ExerciseCreate(ExerciseBase):
     # Options (for type: 'multiple_choice')
     options: Options | None = None
 
-    @field_validator('topic', mode='before')
+    @field_validator('topic', mode='after')
     @classmethod
     def validate_topic(cls, v):
         """Normalize topic to title case format."""
         return normalize_topic(v)
+
+    @model_validator(mode='after')
+    def validate_exercise(self) -> Self:
+        """Validate exercise business rules."""
+        # Validate options
+        validate_exercise_options(self.type, self.options)
+
+        # Validate translations
+        validate_question_translation_pair(self.question_translation,
+                                self.question_translation_language)
+
+        # Validate translation usage
+        validate_translation_usage(self.type,
+                                   self.question_translation)
+
+        return self
 
     model_config = ConfigDict(
         json_schema_extra={
@@ -93,21 +116,6 @@ class ExerciseCreate(ExerciseBase):
         }
     )
 
-    @model_validator(mode='after')
-    def validate_exercise(self) -> Self:
-        """Validate exercise business rules."""
-        # Validate options
-        validate_exercise_options(self.type, self.options)
-
-        # Validate translations
-        validate_question_translation_pair(self.question_translation,
-                                self.question_translation_language)
-
-        # Validate translation usage
-        validate_translation_usage(self.type,
-                                   self.question_translation)
-        return self
-
 
 class ExerciseUpdate(BaseModel):
     """Schema for update exercise (for admin).
@@ -135,10 +143,12 @@ class ExerciseUpdate(BaseModel):
     question_translation: str | None = Field(None, min_length=1)
     question_translation_language: LanguageEnum | None = None
 
-    @field_validator('topic', mode='before')
+    @field_validator('topic', mode='after')
     @classmethod
-    def validate_topic(cls, v):
-        """Normalize topic to title case format."""
+    def validate_topic(cls, v: str | None):
+        """Normalize topic to title case format if provided."""
+        if v is None:
+            return None
         return normalize_topic(v)
 
     model_config = ConfigDict(

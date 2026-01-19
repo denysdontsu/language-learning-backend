@@ -44,7 +44,7 @@ class ExerciseHistoryCreate(ExerciseHistoryBase):
         }
     )
 
-    @model_validator('after')
+    @model_validator(mode='after')
     def validate_status(self) -> Self:
         """Validate that status and user_answer are consistent."""
         validate_exercise_status(self.status, self.user_answer)
