@@ -1,69 +1,121 @@
-# 🌍 Language Learning Platform API (WIP)
+# 🌍 Language Learning Platform API
 
-Backend API for a language learning platform.
+Backend REST API for an interactive language learning platform with spaced repetition and progress tracking.
 
-The project is in early development stage and serves as an engineering portfolio.
+The project is in early development stage.
 
 ## 📡 API Endpoints (Implemented)
 
 ### Authentication
 
-- **POST** `/auth/register` — Simple user registration
+**Registration:**
+- **POST** `/auth/register` - Simple user registration
     - Request: `UserCreate` (email, username, name, native_language, password)
     - Response: `UserBrief` (201 Created)
     - Validates email/username uniqueness, password strength
 
-- **POST** `/auth/register/complete` — Registration with learning language
+- **POST** `/auth/register/complete` - Registration with learning language
     - Request: `UserCreateWithLanguage` (+ active_learning_language, active_language_level)
     - Response: `UserBriefWithLang` (201 Created)
     - Creates user and language entry in single transaction
 
 **Login:**
-
-- **POST** `/auth/token` — OAuth2 login (for Swagger UI)
-    - Request: Form data (username=email, password)
+- **POST** `/auth/token` - OAuth2 login (for Swagger UI)
+    - Request: Form data (`username` = email, password)
     - Response: `{"access_token": "...", "token_type": "bearer"}`
     - Used by Swagger UI "Authorize" button
 
-- **POST** `/auth/login` — JSON login (for frontend)
+- **POST** `/auth/login` - JSON login (for frontend)
     - Request: `UserLogin` (email, password)
     - Response: `{"access_token": "...", "token_type": "bearer"}`
     - Returns JWT token for authentication
 
+### User Management
+
+**Authentication required (JWT Bearer token)**
+
+- **GET** `/users/me/` - Get current user profile 
+    - Request: JWT Bearer token (здесь нужен Request? или ничего не указывать)
+    - Response: `UserBriefWithLang` (if active language set) or `UserBrief`
+    - Returns user profile with learning progress
+
+- **POST** `users/me` - Update user profile
+    - Request: `UserUpdate` (email, username, name, native_language)
+    - Response: `UserBrief`
+    - Returns updated user profile
+
+- **PATCH** `users/me/password` - Change user password
+    - Request: `UserChangePassword` (old_password, new_password)
+    - Response: 204 No content
+    - Rate limit: 5 requests/hour
+
 ### User languages
 
-- **GET** `/users/me/languages` — Get user's learning languages
-    - Response: `list[UserLanguageBrief]`
-    - Requires active learning language
-    - Returns empty list if no languages
+**Authentication required**
 
-- **POST** `/users/me/languages/{language}` — Add or update learning language
+- **GET** `/users/me/languages` - Get learning languages
+    - Response: `list[UserLanguageBrief]`
+    - Returns all languages user is learning (may be empty)
+
+- **POST** `/users/me/languages/{language}` - Add or update learning language
     - Path param: `language` (ISO 639-1 code: en, uk, de)
     - Request: `UserLanguageLevelUpdate` (level, make_active)
-    - Response: `UserLanguageBrief` (201 Created)
-    - Creates if not exists (defaults to A1), updates if exists
+    - Response: `UserLanguageBrief` (201 Created or 200 OK)
+    - Creates if not exists (defaults to A1) or update existing 
+    - Sets as active if `make_active=True`
 
-**Note:** Authentication required for `/users/me/*` endpoints (JWT Bearer token).
+- **DELETE** `/users/me/languages/{language}` - Remove learning language
+    - Path param: `language` (ISO 639-1 code: en, uk, de)
+    - Response: 204 No content
+    - Cannot remove language if it's the only language or current active
+
+### Exercise
+
+**Authentication required - Active learning language required**
+
+- **GET** `/exercises/topics` - Get available exercise topics
+    - Response: `list[str]`
+    - Returns topic for exercises matching user's languages pair (bidirectional)
+
+- **GET** `/exercises/next` - Get next practice exercise
+    - Query params:
+        - `topic` (required) - Exercise topic
+        - `difficult_level` (optional) - CEFR level override (A1-C2), defaults to user's level
+        - `exclude_id` (optional) - Exercise ID to skip (prevents immediate repeats)
+    - Response: `ExerciseQuestion`
+    - Returns random exercise with spaced repetition filtering:
+        - Excludes exercises answered correctly in last 14 days
+        - Excludes skipped exercises from last 3 days
+        - Allows immediate retry of incorrect answers
+
+- **POST** `/exercises/{exercise_id}/submit` - Submit exercise answer
+    - Path: `exercise_id` - Exercise to answer
+    - Request: `ExerciseUserAnswer` (user_answer, time_spent_seconds)
+    - Response: `ExerciseCorrectAnswer` (201 Created)
+    - Validates answer (case-insensitive), determines status, saves to history
+    - Returns correct answer and optional explanation
 
 ---
 
 ## 🛠️ Tech Stack
 
-**Implemented:**
-
+**Core:**
 - Python 3.11+
+- FastAPI 0.118+
 - SQLAlchemy 2.0 (async)
 - PostgreSQL 14+
 - Pydantic v2
-- Alembic (migrations)
-- python-jose (JWT)
+
+**Infrastructure:**
+- Alembic (database migrations)
+- python-jose (JWT tokens)
 - argon2-cffi (password hashing)
 - Poetry (dependency management)
 
 **Planned:**
-
-- FastAPI 0.118+ (in development)
-- pytest (testing)
+- pytest (unit & integration testing)
+- Docker & Docker Compose
+- CI/CD pipeline
 
 ---
 
@@ -73,45 +125,54 @@ The project is in early development stage and serves as an engineering portfolio
 
 - **Database layer:**
     - SQLAlchemy 2.0 async models with relationships
-    - Alembic migrations (8 revisions)
+    - Alembic migrations (9 revisions)
     - Database constraints (email format, positive time, translation completeness)
     - Optimized indexes (partial, composite, unique)
+  
 - **Schema layer:**
     - Pydantic v2 schemas with validation
-    - Enums for languages, levels, and exercise types
-    - Business logic validation (exercise options, translations)
+    - Enums for languages, levels, exercise types and exercise status
+    - Business logic validation (password, exercise options, translations, exercise status)
     - Circular import resolution using TYPE_CHECKING
+  
 - **Core utilities:**
     - Application configuration (Pydantic Settings)
     - Async PostgreSQL connection
     - Security utilities (JWT, password hashing, Argon2)
     - Dependency injection with FastAPI
-    - JWT authentication with role-based access
+  
 - **CRUD layer:**
-    - Users: create, read by id/email/username, update active language
-    - User languages: create, read, update, get all by user
+    - Users: create, read by id/email/username, update, active language management
+    - User languages: create, read, update, delete
+    - Exercise: get topics, retrieve by criteria with spaced repetition
+    - Exercise history: create submission records
+  
 - **Services layer:**
     - Authentication: user registration (simple & with language), login
-    - User languages: add/update learning languages
+    - User management: profile updates, password changes
+    - User languages: add/update learning languages, delete
+    - Exercise: retrieve practice exercises, validate and save submissions
+  
 - **API endpoints:**
-    - Authentication: POST /auth/register, /auth/register/complete
-    - User languages: GET /users/me/languages, POST /users/me/languages/{language}
+    - Authentication: `/auth/register`, `/auth/register/complete`, `/auth/login`, `/auth/token`
+    - User: `/users/me`, `/users/me/password`
+    - Languages: `/users/me/languages`, `/users/me/languages/{language}`
+    - Exercises: `/exercises/topics`, `/exercises/next`, `/exercises/{id}/submit`
 
 ### 🟡 In Development
 
-- CRUD layer (exercises, exercise history)
-- Services layer (exercises, history, statistics)
-- API endpoints (exercises, user profile, history)
-- Login endpoint and token refresh
+- User statistics and progress tracking
+- Performance metrics endpoints
 
 ### 🔴 Planned
 
-- User history and statistics
 - Admin panel for exercise management
 - Unit and integration tests (pytest)
 - Docker setup
 - CI/CD pipeline
 - AI-powered exercise generation (V2)
+- Refresh token (V2)
+- Email verification & password recovery (V2)
 
 ---
 
@@ -128,14 +189,14 @@ user
 ├─ active_learning_language_id (FK → user_level_languages.id)
 ├─ role (default: 'user')
 ├─ is_active (default: true)
-└─ created_at
+└─ created_at (timestamp, default: now())
 
 user_level_language
 ├─ id (PK)
-├─ user_id (FK → users.id)
+├─ user_id (FK → users.id, CASCADE)
 ├─ language (enum: uk, en, de)
 ├─ level (enum: A1, A2, B1, B2, C1, C2)
-├─ created_at
+├─ created_at (timestamp, default: now())
 └─ [UNIQUE INDEX] (user_id, language)
 
 exercise
@@ -148,21 +209,22 @@ exercise
 ├─ correct_answer
 ├─ answer_language (enum: uk, en, de)
 ├─ options (JSONB, nullable)
-├─ question_translation (nullable | str)
+├─ question_translation (nullable | text)
 ├─ question_translation_language (nullable | enum: uk, en, de)
 ├─ is_active (default: true)
-├─ added_at
+├─ added_at (timestamp, default: now())
 ├─ [CHECK] translation completeness
 └─ [PARTIAL INDEX] (topic, difficult_level) WHERE is_active=true
 
 user_exercise_history
 ├─ id (PK)
-├─ user_id (FK → users.id)
-├─ exercise_id (FK → exercises.id)
+├─ user_id (FK → users.id, CASCADE)
+├─ exercise_id (FK → exercises.id, RESTRICT)
 ├─ user_answer
-├─ is_correct
+├─ status (enum: correct, incorrect, skip)
 ├─ time_spent_seconds (CHECK: > 0)
-├─ completed_at
+├─ completed_at (timestamp, default: now())
+├─ [CHECK] check_status
 ├─ [INDEX] (user_id, completed_at)
 └─ [INDEX] (user_id, exercise_id)
 ```
@@ -172,16 +234,17 @@ user_exercise_history
 - **LanguageEnum:** uk (Ukrainian), en (English), de (German)
 - **LanguageLevelEnum:** A1, A2, B1, B2, C1, C2 (CEFR standard)
 - **ExerciseTypeEnum:** sentence_translation, multiple_choice, fill_blank
+- **ExerciseStatusEnum:** correct (14-day timeout), skip (3-day timeout), incorrect (no timeout)
 
 ---
 
-## 🗃️ Database Implementation Features
+## Database Implementation Features
 
 ### Database-level validation
 
-- **check_email_format** — email validation at PostgreSQL level
-- **positive_time** — ensures positive exercise completion time
-- **check_translation_complete** — both translation fields are filled together or both NULL
+- **check_email_format** - email validation at PostgreSQL level
+- **positive_time** - ensures positive exercise completion time
+- **check_translation_complete** - both translation fields are filled together or both NULL
 
 ### Performance optimizations
 
@@ -189,22 +252,11 @@ user_exercise_history
     - Speeds up filtering when fetching exercises
     - Saves space (inactive exercises not indexed)
 - **Composite indexes** for statistics
-    - `(user_id, completed_at)` — history by time
-    - `(user_id, exercise_id)` — JOINs for analytics
+    - `(user_id, completed_at)` - history by time
+    - `(user_id, exercise_id)` - JOINs for analytics
 - **Unique index** on `(user_id, language)`
     - Prevents duplicate languages per user
     - Speeds up lookups
-
-### Migrations
-
-- 4 Alembic revisions:
-    1. Initial schema (users, exercises, relationships)
-    2. Add constraints (translation completeness)
-    3. Add active learning language reference to user and rename translation fields
-    4. Add non-nullable text column to persist user answers for exercises
-    5. Add unique constraint and make active_learning_language nullable
-    6. Remove duplicate unique index on user_level_languages
-    7. Add ' fill_blank' to exercise type enum
 
 ---
 
@@ -223,31 +275,37 @@ app/
 │
 ├── api/                      # Partially implemented
 │   ├── endpoints/
-│   │   ├── auth.py           # Registration endpoints
+│   │   ├── auth.py           # Authentication endpoints
+│   │   ├── exercises.py      # Exercise practice endpoints
+│   │   ├── users.py          # User management endpoints
 │   │   └── languages.py      # Language management endpoints
 │   └── dependencies.py       # Dependency injection
 │
-├── crud/                     # Partially implemented
-│   ├── user.py               # User CRUD operations
-│   ├── user_language.py      # Language CRUD operations
-│   ├── exercise.py           # 🟡 In development
-│   └── exercise_history.py   # 🟡 In development
+├── crud/                     # CRUD operations
+│   ├── user.py              
+│   ├── user_language.py
+│   ├── exercise.p
+│   └── exercise_history.py
 │
 ├── services/                 # Partially implemented
 │   ├── __init__.py
 │   ├── auth.py               # Registration & authentication
+│   ├── exercise.py           # Exercise logic with validation
+│   ├── user.py               # User management logic
 │   └── user_language.py      # Language management logic
 │
 ├── models/                   # SQLAlchemy models
+│   ├── __init__.py
 │   ├── user.py
 │   ├── user_level_language.py
 │   ├── exercise.py
 │   └── user_exercise_history.py
 │
 ├── schemas/                  # Pydantic schemas & Enums
-│   ├── common.py             # Options
-│   ├── enums.py              # Language, Level, ExerciseType
-│   ├── token.py              # JWT token schemas
+│   ├── __init__.py
+│   ├── common.py             # Shared schemas (Options)
+│   ├── enums.py              # Application enums
+│   ├── jwt_token.py          # JWT token schemas
 │   ├── user.py
 │   ├── user_level_language.py
 │   ├── exercise.py
@@ -268,7 +326,9 @@ migrations/                   # Alembic migrations
 │   ├── f363429e20bf_add_unique_constraint_and_make_active_.py
 │   ├── 808ed363444b_remove_duplicate_unique_index_on_user_.py
 │   ├── e9d426e6d045_add_fill_blank_to_exercise_type_enum.py
-│   └── 860522b56861_fix_foreign_key_user_fk_cascade_.py
+│   ├── 860522b56861_fix_foreign_key_user_fk_cascade_.py
+│   └── 756af3813bf4_add_status_column_with_check_constraint.py
+
 ├── env.py
 └── script.py.mako
 ```
@@ -363,7 +423,7 @@ poetry run uvicorn app.main:app --reload
 - Alternative docs (ReDoc): http://localhost:8000/redoc
 
 Use Swagger UI to test endpoints interactively.
-⚠️ API is partially implemented and subject to change.
+API is in active development and subject to changes.
 
 ---
 
@@ -381,13 +441,13 @@ Use Swagger UI to test endpoints interactively.
 - [x]  User registration endpoints (simple & with language)
 - [x]  Login endpoint (OAuth2 + JSON)
 
-### Phase 2: API & Features
+### Phase 2: API & Features --- 
 
-- [ ]  User profile management
-- [ ]  Languages endpoint
-- [ ]  Exercise CRUD
-- [ ]  Exercise submission & validation
-- [ ]  Exercise endpoint
+- [x]  User profile management
+- [x]  Languages endpoint
+- [x]  Exercise CRUD
+- [x]  Exercise submission & validation
+- [x]  Exercise endpoint
 - [ ]  History tracking
 - [ ]  Statistics calculation
 
@@ -415,8 +475,6 @@ Use Swagger UI to test endpoints interactively.
 
 GitHub: [@denysdontsu](https://github.com/denysdontsu)
 
-Project created for learning FastAPI, SQLAlchemy 2.0 (async), and REST API design.
-
 ---
 
 ![Status](https://img.shields.io/badge/status-early%20development-yellow)
@@ -429,4 +487,4 @@ Project created for learning FastAPI, SQLAlchemy 2.0 (async), and REST API desig
 
 **Version:** 0.1.0-alpha
 
-**Last updated:** December 2025
+**Last updated:** January 2026
