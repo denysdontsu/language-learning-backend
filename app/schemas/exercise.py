@@ -190,14 +190,13 @@ class ExerciseQuestion(ExerciseBase):
     id: int
     options: Options | None
     question_text: str
-    
+
     @computed_field
     @property
     def instruction(self) -> str:
         return self.type.instruction
 
     model_config = ConfigDict(
-        use_enum_values=True,
         from_attributes=True,
         json_schema_extra={
             'examples': [
@@ -363,7 +362,6 @@ class ExerciseBrief(ExerciseBase):
 
     model_config = ConfigDict(
         from_attributes=True,
-        use_enum_values=True,
         json_schema_extra={
             'example': {
                 'id': 1,
@@ -408,7 +406,6 @@ class ExerciseRead(ExerciseBrief):
 
     model_config = ConfigDict(
         from_attributes=True,
-        use_enum_values=True,
         json_schema_extra={
             'examples': [
                 # Example 1: Translation exercise
