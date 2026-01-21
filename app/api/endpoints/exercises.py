@@ -35,7 +35,33 @@ async def get_exercise(
         difficult_level: LanguageLevelEnum | None = None,
         exclude_id: int | None = None
 ) -> ExerciseQuestion:
-    """Get random exercise for practice."""
+    """
+    Get random exercise for practice session with spaced repetition.
+
+    Retrieves exercise matching user's language pair and criteria, applying
+    intelligent filtering based on completion history.
+
+    Query Parameters:
+        topic: Exercise topic (required, case-insensitive, normalized to title case)
+        difficult_level: CEFR difficulty level (A1-C2), defaults to user's active language level
+        exclude_id: Exercise ID to skip (prevents immediate repeats in session)
+
+    Spaced Repetition Logic:
+        - Correct answers: 14-day exclusion (336 hours)
+        - Skipped exercises: 3-day exclusion (72 hours)
+        - Incorrect answers: Immediate retry allowed (no exclusion)
+
+    Returns:
+        Random exercise matching criteria with question text, options (if applicable),
+        and instruction based on exercise type
+
+    Raises:
+        404: No exercises available for specified criteria
+             Suggestions provided: try different difficulty, topic, or wait for timeout
+
+    Example:
+        GET /exercises/next?topic=conditions&difficult_level=B1&exclude_id=42
+    """
     return await get_exercise_service(db, user, topic, difficult_level, exclude_id)
 
 
