@@ -88,7 +88,7 @@ async def get_exercise(
                 ),
                 # Skip: exclude for 3 days
                 and_(
-                    UserExerciseHistory.status == 'skip',
+                    UserExerciseHistory.status == ExerciseStatusEnum.SKIP,
                     UserExerciseHistory.completed_at
                         >= func.now() - timedelta(hours=ExerciseStatusEnum.SKIP.exclude_at_hours)
                 )
