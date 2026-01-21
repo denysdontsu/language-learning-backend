@@ -12,11 +12,11 @@ from pydantic import (
 
 from app.schemas.enums import ExerciseTypeEnum, LanguageLevelEnum, LanguageEnum, ExerciseStatusEnum
 from app.schemas.common import Options
+from app.utils.normalizers import normalize_topic
 from app.utils.validators import (
     validate_question_translation_pair,
     validate_exercise_options,
-    validate_translation_usage,
-    normalize_topic)
+    validate_translation_usage)
 
 
 class ExerciseBase(BaseModel):

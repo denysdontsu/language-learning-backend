@@ -1,3 +1,5 @@
+import re
+
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -7,7 +9,7 @@ from app.models import User
 from app.schemas.enums import LanguageLevelEnum, ExerciseStatusEnum
 from app.schemas.exercise import ExerciseQuestion, ExerciseUserAnswer, ExerciseCorrectAnswer
 from app.schemas.user_exercise_history import ExerciseHistoryCreate
-from app.utils.validators import normalize_topic
+from app.utils.normalizers import normalize_topic, normalize_answer
 
 
 async def get_exercise_service(
@@ -103,15 +105,14 @@ async def check_and_save_submission(
             detail=f'Exercise with id {exercise_id} not found'
         )
 
-    # Normalize answers for comparison (strip whitespace, lowercase)
-    user_answer_normalized = data.user_answer.strip()
-    correct_answer_normalized = exercise.correct_answer.strip()
+    user_answer_normalized = normalize_answer(data.user_answer)
+    correct_answer_normalized = normalize_answer(exercise.correct_answer)
 
     # Determine status and correctness
     if not user_answer_normalized:
         answer_status = ExerciseStatusEnum.SKIP
         is_correct = False
-    elif user_answer_normalized.lower() == correct_answer_normalized.lower():
+    elif user_answer_normalized == correct_answer_normalized:
         answer_status = ExerciseStatusEnum.CORRECT
         is_correct = True
     else:
