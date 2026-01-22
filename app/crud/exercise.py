@@ -4,7 +4,11 @@ from sqlalchemy import or_, and_, select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Exercise, User, UserExerciseHistory
-from app.schemas.enums import LanguageLevelEnum, LanguageEnum, ExerciseStatusEnum
+from app.schemas.enums import (
+    LanguageLevelEnum,
+    LanguageEnum,
+    ExerciseStatusEnum,
+    ExerciseTypeEnum)
 
 
 async def get_all_topics(
@@ -107,15 +111,31 @@ async def get_exercise(
             Exercise.topic == topic,
             Exercise.difficult_level == difficult_level,
 
-            # Bidirectional language matching
+            # Language matching based on exercise type
             or_(
+                # sentence_translation: bidirectional
                 and_(
-                    Exercise.question_language == native_lang,
-                    Exercise.answer_language == active_lang
+                    Exercise.type == ExerciseTypeEnum.SENTENCE_TRANSLATION,
+                    or_(
+                        and_(
+                            Exercise.question_language == native_lang,
+                            Exercise.answer_language == active_lang
+                        ),
+                        and_(
+                            Exercise.question_language == active_lang,
+                            Exercise.answer_language == native_lang
+                        )
+                    )
                 ),
+
+                # fill_blank / multiple_choice: question on active language
                 and_(
+                    Exercise.type.in_([
+                        ExerciseTypeEnum.FILL_BLANK,
+                        ExerciseTypeEnum.MULTIPLE_CHOICE
+                    ]),
                     Exercise.question_language == active_lang,
-                    Exercise.answer_language == native_lang
+                    Exercise.question_translation_language == native_lang
                 )
             ),
 
