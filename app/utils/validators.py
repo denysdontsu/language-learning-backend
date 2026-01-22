@@ -48,27 +48,41 @@ def validate_question_translation_pair(
 
 def validate_exercise_options(
         exercise_type: ExerciseTypeEnum,
-        options: Options | None
+        options: Options | None,
+        correct_answer: str
 ) -> None:
     """
     Validate that options are provided correctly based on exercise type.
 
     Rules:
-    - MULTIPLE_CHOICE: Options REQUIRED (must have answer choices A, B, C, D)
+    - MULTIPLE_CHOICE:
+        Options REQUIRED (must have answer choices A and B, optionally C and D)
+        Correct answer MUST exist in options
     - SENTENCE_TRANSLATION: Options NOT allowed (no choices needed)
     - FILL_BLANK: Options NOT allowed (free text answer)
 
     Args:
         exercise_type: Type of exercise
         options: Answer options for multiple choice (optional)
+        correct_answer: correct answer text (must match one of the options for multiple_choice)
 
     Raises:
         ValueError: If options usage doesn't match exercise type requirements
     """
     if exercise_type == ExerciseTypeEnum.MULTIPLE_CHOICE:
+        # Multiple choice MUST have options
         if options is None:
             raise ValueError("'options' is required when exercise type is 'multiple_choice'")
+
+        # Correct answer MUST exist in options
+        available_options = list(options.model_dump().values())
+        if correct_answer not in available_options:
+            raise ValueError(
+                f"Correct answer '{correct_answer}' not found in options. "
+                f"Available options: {available_options}"
+            )
     elif options is not None:
+        # Other types should NOT have options
         raise ValueError(f"Exercise type '{exercise_type.value}' should not have options")
 
 

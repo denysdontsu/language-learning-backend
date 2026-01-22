@@ -12,6 +12,7 @@ from pydantic import (
 
 from app.schemas.enums import ExerciseTypeEnum, LanguageLevelEnum, LanguageEnum, ExerciseStatusEnum
 from app.schemas.common import Options
+from app.utils.helpers import get_correct_option_key
 from app.utils.normalizers import normalize_topic
 from app.utils.validators import (
     validate_question_translation_pair,
@@ -53,7 +54,7 @@ class ExerciseCreate(ExerciseBase):
     def validate_exercise(self) -> Self:
         """Validate exercise business rules."""
         # Validate options
-        validate_exercise_options(self.type, self.options)
+        validate_exercise_options(self.type, self.options, self.correct_answer)
 
         # Validate translations
         validate_question_translation_pair(self.question_translation,
@@ -268,10 +269,11 @@ class ExerciseUserAnswer(BaseModel):
     )
 
 
-class ExerciseCorrectAnswer(BaseModel):
+class ExerciseCorrectAnswer(ExerciseBase):
     """Schema for response after answer submission."""
     id: int
     question_text: str
+    options: Options | None
     correct_answer: str = Field(min_length=1)
     user_answer: str
     is_correct: bool
@@ -279,15 +281,28 @@ class ExerciseCorrectAnswer(BaseModel):
     question_translation: str | None
     explanation: str | None = None
 
+    @computed_field
+    @property
+    def correct_option_key(self) -> str | None:
+        """Option key for correct answer (multiple choice only)."""
+        return get_correct_option_key(
+            self.type,
+            self.options,
+            self.correct_answer
+        )
+
     model_config = ConfigDict(
-        use_enum_values=True,
         from_attributes=True,
         json_schema_extra={
             'examples': [
                 {
                     # Example 1: Translation exercise
                     'id': 1,
+                    'topic': 'Present perfect',
+                    'difficult_level': 'B1',
+                    'type': 'sentence_translation',
                     'question_text': 'I have lived here for 5 years',
+                    'options': None,
                     'correct_answer': 'Я живу тут 5 років',
                     'user_answer': 'Я живу тут 5 років',
                     'is_correct': True,
@@ -298,18 +313,32 @@ class ExerciseCorrectAnswer(BaseModel):
                 {
                     # Example 2: Multiple choice
                     'id': 2,
+                    'topic': 'Past simple verbs',
+                    'difficult_level': 'A2',
+                    'type': 'multiple_choice',
                     'question_text': 'Yesterday I ___ to the store',
+                    'options': {
+                        'A': 'go',
+                        'B': 'went',
+                        'C': 'gone',
+                        'D': 'going'
+                    },
                     'correct_answer': 'went',
                     'user_answer': 'go',
                     'is_correct': False,
                     'status': 'incorrect',
                     'question_translation': 'Вчора я пішов у магазин',
-                    'explanation': None
+                    'explanation': None,
+                    'correct_option_key': 'B'
                 },
                 # Example 3: Fill in the blank
                 {
                     'id': 3,
+                    'topic': 'Articles',
+                    'difficult_level': 'A1',
+                    'type': 'fill_blank',
                     'question_text': 'I have ___ apple',
+                    'options': None,
                     'correct_answer': 'an',
                     'user_answer': 'a',
                     'is_correct': False,
@@ -360,6 +389,16 @@ class ExerciseBrief(ExerciseBase):
     def type_display_name(self) -> str:
         return self.type.display_name
 
+    @computed_field
+    @property
+    def correct_option_key(self) -> str | None:
+        """Option key for correct answer (multiple choice only)."""
+        return get_correct_option_key(
+            self.type,
+            self.options,
+            self.correct_answer
+        )
+
     model_config = ConfigDict(
         from_attributes=True,
         json_schema_extra={
@@ -404,6 +443,16 @@ class ExerciseRead(ExerciseBrief):
             return None
         return self.question_translation_language.full_name
 
+    @computed_field
+    @property
+    def correct_option_key(self) -> str | None:
+        """Option key for correct answer (multiple choice only)."""
+        return get_correct_option_key(
+            self.type,
+            self.options,
+            self.correct_answer
+        )
+
     model_config = ConfigDict(
         from_attributes=True,
         json_schema_extra={
@@ -447,6 +496,7 @@ class ExerciseRead(ExerciseBrief):
                     },
                     'question_text': 'Yesterday I ___ to the store',
                     'correct_answer': 'went',
+                    'correct_option_key': 'B',
                     'question_translation': 'Вчора я пішов у магазин',
                     'question_translation_language': 'uk',
                     'question_translation_full_name': 'Ukrainian',
