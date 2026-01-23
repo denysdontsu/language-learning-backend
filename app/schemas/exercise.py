@@ -368,11 +368,50 @@ class ExerciseFilter(BaseModel):
     )
 
 
+class ExerciseBriefForHistory(ExerciseBase):
+    """Brief exercise info for history list."""
+    id: int
+    question_text: str = Field(description="Question text for context")
+
+    @computed_field
+    @property
+    def type_display_name(self) -> str:
+        """Human-readable type name."""
+        return self.type.display_name
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            'example':{
+                'id': 1,
+                'topic': 'Present perfect',
+                'difficult_level': 'B1',
+                'type': 'sentence_translation',
+                'question_text': 'I have lived here for 5 years',
+                'type_display_name': 'Sentence translation'
+            }
+        }
+    )
+
+
+
 class ExerciseBrief(ExerciseBase):
     """Brief schema for exercise response."""
     id: int
+    options: Options | None = None
+
+    # Question
+    question_text: str = Field(min_length=1)
     question_language: LanguageEnum
+
+    # Answer
+    correct_answer: str = Field(min_length=1)
     answer_language: LanguageEnum
+
+    # Translation (optional)
+    question_translation: str | None = Field(None, min_length=1)
+    question_translation_language: LanguageEnum | None = None
+
 
     @computed_field
     @property
@@ -383,6 +422,13 @@ class ExerciseBrief(ExerciseBase):
     @property
     def answer_language_full_name(self) -> str:
         return self.answer_language.full_name
+
+    @computed_field
+    @property
+    def question_translation_full_name(self) -> str | None:
+        if self.question_translation_language is None:
+            return None
+        return self.question_translation_language.full_name
 
     @computed_field
     @property
@@ -407,11 +453,21 @@ class ExerciseBrief(ExerciseBase):
                 'topic': 'Present perfect',
                 'difficult_level': 'B1',
                 'type': 'sentence_translation',
+                'type_display_name': 'Sentence translation',
+                'options': None,
+                'correct_option_key': None,
+                # Question
+                'question_text': 'I have lived here for 5 years',
                 'question_language': 'en',
-                'answer_language': 'uk',
                 'question_language_full_name': 'English',
+                # Answer
+                'correct_answer': 'Я живу тут 5 років',
+                'answer_language': 'uk',
                 'answer_language_full_name': 'Ukrainian',
-                'type_display_name': 'Sentence translation'
+                # Translation (optional)
+                'question_translation': None,
+                'question_translation_language': None,
+                'question_translation_full_name': None
             }
         }
     )
@@ -419,39 +475,10 @@ class ExerciseBrief(ExerciseBase):
 
 class ExerciseRead(ExerciseBrief):
     """Schema for exercise response (for admin)."""
-    # Base info
-    options: Options | None = None
-
-    # Question
-    question_text: str = Field(min_length=1)
-
-    # Answer
-    correct_answer: str = Field(min_length=1)
-
-    # Translation (optional)
-    question_translation: str | None = Field(None, min_length=1)
-    question_translation_language: LanguageEnum | None = None
-
     # Metadata
     added_at: datetime
     is_active: bool
 
-    @computed_field
-    @property
-    def question_translation_full_name(self) -> str | None:
-        if self.question_translation_language is None:
-            return None
-        return self.question_translation_language.full_name
-
-    @computed_field
-    @property
-    def correct_option_key(self) -> str | None:
-        """Option key for correct answer (multiple choice only)."""
-        return get_correct_option_key(
-            self.type,
-            self.options,
-            self.correct_answer
-        )
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -464,16 +491,21 @@ class ExerciseRead(ExerciseBrief):
                     'difficult_level': 'B1',
                     'type': 'sentence_translation',
                     'type_display_name': 'Sentence translation',
+                    'options': None,
+                    'correct_option_key': None,
+                    # Question
+                    'question_text': 'I have lived here for 5 years',
                     'question_language': 'en',
                     'question_language_full_name': 'English',
+                    # Answer
+                    'correct_answer': 'Я живу тут 5 років',
                     'answer_language': 'uk',
                     'answer_language_full_name': 'Ukrainian',
-                    'options': None,
-                    'question_text': 'I have lived here for 5 years',
-                    'correct_answer': 'Я живу тут 5 років',
+                    # Translation (optional)
                     'question_translation': None,
                     'question_translation_language': None,
                     'question_translation_full_name': None,
+                    # Metadata
                     'added_at': '2024-12-20T12:30:00Z',
                     'is_active': True
                 },
@@ -484,22 +516,26 @@ class ExerciseRead(ExerciseBrief):
                     'difficult_level': 'A2',
                     'type': 'multiple_choice',
                     'type_display_name': 'Multiple choice',
-                    'question_language': 'en',
-                    'question_language_full_name': 'English',
-                    'answer_language': 'en',
-                    'answer_language_full_name': 'English',
                     'options': {
                         'A': 'go',
                         'B': 'went',
                         'C': 'gone',
                         'D': 'going'
                     },
-                    'question_text': 'Yesterday I ___ to the store',
-                    'correct_answer': 'went',
                     'correct_option_key': 'B',
+                    # Question
+                    'question_text': 'Yesterday I ___ to the store',
+                    'question_language': 'en',
+                    'question_language_full_name': 'English',
+                    # Answer
+                    'correct_answer': 'went',
+                    'answer_language': 'en',
+                    'answer_language_full_name': 'English',
+                    # Translation (optional)
                     'question_translation': 'Вчора я пішов у магазин',
                     'question_translation_language': 'uk',
                     'question_translation_full_name': 'Ukrainian',
+                    # Metadata
                     'added_at': '2024-12-20T12:30:00Z',
                     'is_active': True
                 },
@@ -509,20 +545,25 @@ class ExerciseRead(ExerciseBrief):
                     'topic': 'Articles',
                     'difficult_level': 'A1',
                     'type': 'fill_blank',
-                    'type_display_name': 'Fill in the blank', # В Enum 'Fill in the blank'
+                    'type_display_name': 'Fill in the blank',
+                    'options': None,
+                    'correct_option_key': None,
+                    # Question
+                    'question_text': 'I have ___ apple',
                     'question_language': 'en',
                     'question_language_full_name': 'English',
+                    # Answer
+                    'correct_answer': 'an',
                     'answer_language': 'en',
                     'answer_language_full_name': 'English',
-                    'options': None,
-                    'question_text': 'I have ___ apple',
-                    'correct_answer': 'an',
+                    # Translation (optional)
                     'question_translation': 'У мене є яблуко',
                     'question_translation_language': 'uk',
                     'question_translation_full_name': 'Ukrainian',
+                    # Metadata
                     'added_at': '2024-12-20T12:30:00Z',
                     'is_active': True
-                },
+                }
             ]
         }
     )
