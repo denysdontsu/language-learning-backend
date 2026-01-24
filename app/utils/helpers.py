@@ -25,6 +25,7 @@ def get_correct_option_key(
         return None
 
     # Find key by value
+    options = Options.model_dump(options)
     for key, value in options.items():
         if value == correct_answer:
             return key
