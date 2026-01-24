@@ -1,10 +1,8 @@
-import re
-
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.crud.exercise import get_exercise, get_exercise_by_id
-from app.crud.exercise_history import create_user_history
+from app.crud.user_exercise_history import create_user_history
 from app.models import User
 from app.schemas.enums import LanguageLevelEnum, ExerciseStatusEnum
 from app.schemas.exercise import ExerciseQuestion, ExerciseUserAnswer, ExerciseCorrectAnswer
@@ -132,7 +130,11 @@ async def check_and_save_submission(
     # Build response
     response_model = ExerciseCorrectAnswer(
         id=exercise.id,
+        topic=exercise.topic,
+        difficult_level=exercise.difficult_level,
+        type=exercise.type,
         question_text=exercise.question_text,
+        options=exercise.options,
         correct_answer=exercise.correct_answer,
         user_answer=data.user_answer,
         is_correct=is_correct,

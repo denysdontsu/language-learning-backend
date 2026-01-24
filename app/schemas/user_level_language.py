@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, computed_field
 
 from app.schemas.enums import LanguageLevelEnum, LanguageEnum
 
@@ -14,8 +14,12 @@ class UserLanguageBase(BaseModel):
     language: LanguageEnum
     level: LanguageLevelEnum
 
+    @computed_field
+    @property
+    def level_description(self) -> str:
+        return self.level.description
+
     model_config = ConfigDict(
-        use_enum_values=True,
         from_attributes=True
     )
 
@@ -50,14 +54,15 @@ class UserLanguageBrief(UserLanguageBase):
     """Brief schema for user language level response."""
     id: int
 
+
     model_config = ConfigDict(
-        use_enum_values=True,
         from_attributes=True,
         json_schema_extra={
             'example': {
                 'id': 1,
                 'language': 'en',
                 'level': 'B2',
+                'level_description': 'Upper Intermediate'
             }
         }
     )
@@ -69,7 +74,6 @@ class UserLanguageRead(UserLanguageBrief):
     created_at: datetime
 
     model_config = ConfigDict(
-        use_enum_values=True,
         from_attributes=True,
         json_schema_extra={
             'example': {
@@ -83,6 +87,7 @@ class UserLanguageRead(UserLanguageBrief):
                     },
                 'language': 'en',
                 'level': 'B2',
+                'level_description': 'Upper Intermediate',
                 'created_at': '2024-12-20T12:30:00Z'
                 }
             }

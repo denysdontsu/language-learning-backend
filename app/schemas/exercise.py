@@ -303,6 +303,7 @@ class ExerciseCorrectAnswer(ExerciseBase):
                     'type': 'sentence_translation',
                     'question_text': 'I have lived here for 5 years',
                     'options': None,
+                    'correct_option_key': None,
                     'correct_answer': 'Я живу тут 5 років',
                     'user_answer': 'Я живу тут 5 років',
                     'is_correct': True,
@@ -323,13 +324,13 @@ class ExerciseCorrectAnswer(ExerciseBase):
                         'C': 'gone',
                         'D': 'going'
                     },
+                    'correct_option_key': 'B',
                     'correct_answer': 'went',
                     'user_answer': 'go',
                     'is_correct': False,
                     'status': 'incorrect',
                     'question_translation': 'Вчора я пішов у магазин',
-                    'explanation': None,
-                    'correct_option_key': 'B'
+                    'explanation': None
                 },
                 # Example 3: Fill in the blank
                 {
@@ -340,6 +341,7 @@ class ExerciseCorrectAnswer(ExerciseBase):
                     'question_text': 'I have ___ apple',
                     'options': None,
                     'correct_answer': 'an',
+                    'correct_option_key': None,
                     'user_answer': 'a',
                     'is_correct': False,
                     'status': 'incorrect',
@@ -412,6 +414,8 @@ class ExerciseBrief(ExerciseBase):
     question_translation: str | None = Field(None, min_length=1)
     question_translation_language: LanguageEnum | None = None
 
+    # Explanation (optional, Phase 2)
+    explanation: str | None = None
 
     @computed_field
     @property
@@ -448,27 +452,85 @@ class ExerciseBrief(ExerciseBase):
     model_config = ConfigDict(
         from_attributes=True,
         json_schema_extra={
-            'example': {
-                'id': 1,
-                'topic': 'Present perfect',
-                'difficult_level': 'B1',
-                'type': 'sentence_translation',
-                'type_display_name': 'Sentence translation',
-                'options': None,
-                'correct_option_key': None,
-                # Question
-                'question_text': 'I have lived here for 5 years',
-                'question_language': 'en',
-                'question_language_full_name': 'English',
-                # Answer
-                'correct_answer': 'Я живу тут 5 років',
-                'answer_language': 'uk',
-                'answer_language_full_name': 'Ukrainian',
-                # Translation (optional)
-                'question_translation': None,
-                'question_translation_language': None,
-                'question_translation_full_name': None
-            }
+            'examples': [
+                # Example 1: Translation exercise
+                {
+                    'id': 1,
+                    'topic': 'Present perfect',
+                    'difficult_level': 'B1',
+                    'type': 'sentence_translation',
+                    'type_display_name': 'Sentence translation',
+                    'options': None,
+                    'correct_option_key': None,
+                    # Question
+                    'question_text': 'I have lived here for 5 years',
+                    'question_language': 'en',
+                    'question_language_full_name': 'English',
+                    # Answer
+                    'correct_answer': 'Я живу тут 5 років',
+                    'answer_language': 'uk',
+                    'answer_language_full_name': 'Ukrainian',
+                    # Translation (optional)
+                    'question_translation': None,
+                    'question_translation_language': None,
+                    'question_translation_full_name': None,
+                    # Explanation (optional, Phase 2)
+                    'explanation': None
+                },
+                # Example 2: Multiple choice
+                {
+                    'id': 2,
+                    'topic': 'Past simple verbs',
+                    'difficult_level': 'A2',
+                    'type': 'multiple_choice',
+                    'type_display_name': 'Multiple choice',
+                    'options': {
+                        'A': 'go',
+                        'B': 'went',
+                        'C': 'gone',
+                        'D': 'going'
+                    },
+                    'correct_option_key': 'B',
+                    # Question
+                    'question_text': 'Yesterday I ___ to the store',
+                    'question_language': 'en',
+                    'question_language_full_name': 'English',
+                    # Answer
+                    'correct_answer': 'went',
+                    'answer_language': 'en',
+                    'answer_language_full_name': 'English',
+                    # Translation (optional)
+                    'question_translation': 'Вчора я пішов у магазин',
+                    'question_translation_language': 'uk',
+                    'question_translation_full_name': 'Ukrainian',
+                    # Explanation (optional, Phase 2)
+                    'explanation': None
+                },
+                # Example 3: Fill blank
+                {
+                    'id': 3,
+                    'topic': 'Articles',
+                    'difficult_level': 'A1',
+                    'type': 'fill_blank',
+                    'type_display_name': 'Fill in the blank',
+                    'options': None,
+                    'correct_option_key': None,
+                    # Question
+                    'question_text': 'I have ___ apple',
+                    'question_language': 'en',
+                    'question_language_full_name': 'English',
+                    # Answer
+                    'correct_answer': 'an',
+                    'answer_language': 'en',
+                    'answer_language_full_name': 'English',
+                    # Translation (optional)
+                    'question_translation': 'У мене є яблуко',
+                    'question_translation_language': 'uk',
+                    'question_translation_full_name': 'Ukrainian',
+                    # Explanation (optional, Phase 2)
+                    'explanation': None
+                }
+            ]
         }
     )
 
@@ -507,7 +569,10 @@ class ExerciseRead(ExerciseBrief):
                     'question_translation_full_name': None,
                     # Metadata
                     'added_at': '2024-12-20T12:30:00Z',
-                    'is_active': True
+                    'is_active': True,
+                    # Explanation (optional, Phase 2)
+                    'explanation': None
+
                 },
                 # Example 2: Multiple choice
                 {
@@ -537,7 +602,9 @@ class ExerciseRead(ExerciseBrief):
                     'question_translation_full_name': 'Ukrainian',
                     # Metadata
                     'added_at': '2024-12-20T12:30:00Z',
-                    'is_active': True
+                    'is_active': True,
+                    # Explanation (optional, Phase 2)
+                    'explanation': None
                 },
                 # Example 3: Fill blank
                 {
@@ -562,7 +629,9 @@ class ExerciseRead(ExerciseBrief):
                     'question_translation_full_name': 'Ukrainian',
                     # Metadata
                     'added_at': '2024-12-20T12:30:00Z',
-                    'is_active': True
+                    'is_active': True,
+                    # Explanation (optional, Phase 2)
+                    'explanation': None
                 }
             ]
         }

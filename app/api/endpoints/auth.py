@@ -84,7 +84,7 @@ async def register_with_language(
     Returns:
         UserBriefWithLang: Created user profile with embedded active language info
             - User fields: id, email, username, name, native_language
-            - Language fields: language, level
+            - Language fields: language, level and level description
 
     Raises:
         HTTPException: 400 if email already registered

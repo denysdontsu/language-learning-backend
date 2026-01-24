@@ -26,7 +26,7 @@ async def get_learning_languages(
     Returns empty list if user has no learning languages yet.
 
     Returns:
-        list[UserLanguageBrief]: List of languages with proficiency levels (may be empty)
+        list[UserLanguageBrief]: List of languages with proficiency levels and description (may be empty)
     """
     languages_orm = await get_all_user_languages(db, user.id)
 

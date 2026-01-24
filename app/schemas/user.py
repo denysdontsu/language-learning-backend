@@ -159,8 +159,10 @@ class UserBriefWithLang(UserBrief):
                 'username': 'denisD',
                 'native_language': 'uk',
                 'active_learning_language': {
+                    'id': 1,
                     'language': 'en',
                     'level': 'B2',
+                    'level_description': 'Upper Intermediate'
                 }
             }
         }
@@ -187,6 +189,7 @@ class UserRead(UserBriefWithLang):
                     'id': 1,
                     'language': 'en',
                     'level': 'B2',
+                    'level_description': 'Upper Intermediate'
                 },
                 'role': 'user',
                 'is_active': True,
