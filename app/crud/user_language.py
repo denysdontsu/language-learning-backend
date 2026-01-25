@@ -1,5 +1,3 @@
-from collections.abc import Sequence
-
 from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -27,7 +25,7 @@ async def get_language_by_id(
 async def get_all_user_languages(
         db: AsyncSession,
         user_id: int
-) -> Sequence[UserLevelLanguage]:
+) -> list[UserLevelLanguage]:
     """
     Get all languages user is learning.
 
@@ -36,11 +34,11 @@ async def get_all_user_languages(
         user_id: User ID
 
     Returns:
-        Sequence[UserLevelLanguage]: List of user's language entries
+        list[UserLevelLanguage]: List of user's language entries
     """
     stmt = select(UserLevelLanguage).where(UserLevelLanguage.user_id == user_id)
     result = await db.execute(stmt)
-    return result.scalars().all()
+    return list(result.scalars().all())
 
 
 async def create_user_language(
