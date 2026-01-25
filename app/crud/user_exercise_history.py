@@ -1,12 +1,13 @@
+from idlelib.debugger_r import restart_subprocess_debugger
 from typing import Literal
 
 from sqlalchemy import select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import contains_eager
+from sqlalchemy.orm import contains_eager, joinedload
 
 from app.models import UserExerciseHistory, Exercise
 from app.schemas.enums import LanguageEnum, LanguageLevelEnum, ExerciseStatusEnum
-from app.schemas.user_exercise_history import ExerciseHistoryCreate
+from app.schemas.user_exercise_history import ExerciseHistoryCreate, ExerciseHistoryBrief, ExerciseHistoryRead
 
 
 async def create_user_history(
@@ -105,3 +106,32 @@ async def get_exercise_history_by_user(
 
     result = await db.execute(stmt)
     return list(result.scalars().all())
+
+
+async def get_history_with_exercise_by_id(
+        db: AsyncSession,
+        user_id: int,
+        history_id: int,
+) -> UserExerciseHistory | None:
+    """
+    Get exercise history record with eagerly loaded exercise data.
+
+    Args:
+        db: Database session
+        user_id: Optional user ID for filtering (security)
+        history_id: Exercise history record ID
+
+    Returns:
+        UserExerciseHistory with joined Exercise or None if not found
+    """
+    stmt = (select(UserExerciseHistory)
+            .join(UserExerciseHistory.exercise)
+            .options(contains_eager(UserExerciseHistory.exercise))
+            .where(UserExerciseHistory.id == history_id))
+
+    #  Apply user filter if provided (for authorization)
+    if user_id is not None:
+        stmt = stmt.where(UserExerciseHistory.user_id == user_id)
+
+    result = await db.execute(stmt)
+    return result.scalar_one_or_none()

@@ -1,11 +1,13 @@
 from typing import Literal
 
 from fastapi import APIRouter, Query
+from watchfiles import awatch
 
 from app.api.dependencies import db_dependency, pagination_dependency, current_active_user_dependency
 from app.crud.user_exercise_history import get_exercise_history_by_user
 from app.schemas.enums import LanguageLevelEnum, LanguageEnum, ExerciseStatusEnum
-from app.schemas.user_exercise_history import ExerciseHistoryBrief
+from app.schemas.user_exercise_history import ExerciseHistoryBrief, ExerciseHistoryRead
+from app.services.user_exercise_history import get_exercise_history_by_id_service
 
 router = APIRouter(prefix='/history', tags=['History'])
 
@@ -51,3 +53,29 @@ async def get_exercise_history(
         order
     )
     return [ExerciseHistoryBrief.model_validate(o) for o in result]
+
+
+@router.get('/{history_id}',
+            response_model=ExerciseHistoryRead,
+            summary='Get exercise history record by ID')
+async def get_exercise_history_record(
+        db: db_dependency,
+        user: current_active_user_dependency,
+        history_id: int
+) -> ExerciseHistoryRead:
+    """
+    Get detailed information about single exercise history record.
+
+    Includes full exercise details with correct answer, options,
+    translation, and explanation for review.
+
+    Path Parameters:
+        history_id: Exercise history record ID
+
+    Returns:
+        Detailed exercise history record with complete exercise information
+
+    Raises:
+        404: History record not found or doesn't belong to authenticated user
+    """
+    return await get_exercise_history_by_id_service(db, user.id, history_id)
