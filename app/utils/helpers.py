@@ -1,4 +1,7 @@
 from datetime import date, datetime, timezone, timedelta, time
+from typing import Literal
+
+from fastapi import HTTPException, status
 
 from app.schemas.enums import ExerciseTypeEnum
 from app.schemas.common import Options
@@ -36,7 +39,7 @@ def get_correct_option_key(
 
 
 def parse_date_range(
-        period: str | None,
+        period: Literal['7d', '30d', '3m', '1y', 'all'] | None,
         date_from: date | None,
         date_to: date | None
 ) -> tuple[datetime | None, datetime | None]:
@@ -50,14 +53,33 @@ def parse_date_range(
     3. None - returns default (last 30 days)
 
     Args:
-        period: Quick period selector
-        date_from: Custom start date
-        date_to: Custom end date
+        period: Quick period selector (7d, 30d, 3m, 1y, all)
+        date_from: Custom start date (YYYY-MM-DD)
+        date_to: Custom end date (YYYY-MM-DD)
 
     Returns:
         Tuple of (start_datetime_utc, end_datetime_utc)
-        Both in UTC timezone
+        Both in UTC timezone.
+        Returns (None, None) if period='all'.
+
+    Raises:
+        HTTPException: If validation fails (invalid dates or future dates)
     """
+    # Validation: date_to cannot be before date_from
+    if date_from and date_to:
+        if date_from > date_to:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail='date_from cannot be after date_to'
+            )
+
+    # validate: date_from cannot be in future
+    if date_from and date_from > date.today():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='date_from cannot be in the future'
+        )
+
     now_utc = datetime.now(timezone.utc)
 
     # Priority 1: period
