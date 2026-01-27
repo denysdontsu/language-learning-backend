@@ -1,5 +1,5 @@
-from idlelib.debugger_r import restart_subprocess_debugger
 from typing import Literal
+from datetime import datetime
 
 from sqlalchemy import select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -7,7 +7,7 @@ from sqlalchemy.orm import contains_eager, joinedload
 
 from app.models import UserExerciseHistory, Exercise
 from app.schemas.enums import LanguageEnum, LanguageLevelEnum, ExerciseStatusEnum
-from app.schemas.user_exercise_history import ExerciseHistoryCreate, ExerciseHistoryBrief, ExerciseHistoryRead
+from app.schemas.user_exercise_history import ExerciseHistoryCreate
 
 
 async def create_user_history(
@@ -47,9 +47,11 @@ async def get_exercise_history_by_user(
         language: LanguageEnum | None,
         difficulty_level: LanguageLevelEnum | None,
         status: ExerciseStatusEnum | None,
-        limit: int,
-        offset: int,
-        order: Literal['asc', 'desc'] = 'desc'
+        date_from: datetime | None,
+        date_to: datetime | None,
+        order: Literal['asc', 'desc'] = 'desc',
+        limit: int = 50,
+        offset: int = 0
 ) -> list[UserExerciseHistory]:
     """
     Get user's exercise history with filtering and pagination.
@@ -60,6 +62,8 @@ async def get_exercise_history_by_user(
         language: Filter by practiced language (question or answer)
         difficulty_level: Filter by difficulty level
         status: Filter by completion status (correct/incorrect/skip)
+        date_from: Filter exercises from this date (inclusive, UTC)
+        date_to: Filter exercises to this date (inclusive, UTC)
         order: Sort order by completion date ('asc' or 'desc')
         limit: Maximum number of records to return
         offset: Number of records to skip (for pagination)
@@ -74,6 +78,17 @@ async def get_exercise_history_by_user(
         .options(contains_eager(UserExerciseHistory.exercise))
         .where(UserExerciseHistory.user_id == user_id)
     )
+
+    # Date range
+    if date_from:
+        stmt = stmt.where(
+            UserExerciseHistory.completed_at >= date_from
+        )
+
+    if date_to:
+        stmt = stmt.where(
+            UserExerciseHistory.completed_at <= date_to
+        )
 
     # Apply filters
     if difficulty_level:
