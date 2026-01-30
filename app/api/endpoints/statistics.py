@@ -67,6 +67,7 @@ async def get_user_performance_statistics(
     - Accuracy and mastery status per CEFR level (A1-C2)
     - Top 5 topics by accuracy
     - Weak topics needing practice (accuracy < 60%, min 20 exercises)
+    - Suggested difficulty level (only when language filter is applied)
 
     Filters:
     - language: Optional language filter (null = all languages)
@@ -76,10 +77,16 @@ async def get_user_performance_statistics(
     - by_difficulty: Stats for each CEFR level with mastery status
     - top_topics: Best performing topics (highest accuracy)
     - weak_topics: Topics needing practice (low accuracy, sufficient attempts)
+    - suggested_level: Recommended next difficulty level based on performance
 
     Mastery criteria:
     - Difficulty level: accuracy >= 80% and total >= 100 exercises
     - Topic status: mastered (85%+), good (70-85%), learning (50-70%), needs_practice (<50%)
+
+    Level recommendation criteria:
+    - Comfortable zone: accuracy >= 70% and total >= 10 exercises
+    - Ready for next level: accuracy >= 80% and total >= 50 exercises
+    - Default: A1 for new learners with insufficient practice
     """
     return await get_performance_statistics(db, user.id, language, period)
 

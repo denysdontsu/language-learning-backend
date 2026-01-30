@@ -207,7 +207,7 @@ def _calculate_current_streak(history: list[UserExerciseHistory]) -> StreakResul
 async def get_performance_statistics(
         db: AsyncSession,
         user_id: int,
-        language: LanguageEnum | None,
+        language: LanguageEnum | None = None,
         period: Literal['7d', '30d', '3m', '1y', 'all'] = 'all',
 ) -> PerformanceResponse:
     """
@@ -217,6 +217,7 @@ async def get_performance_statistics(
     - Accuracy and mastery status per CEFR level
     - Top 5 topics by accuracy
     - Weak topics needing practice
+    - Suggested difficulty level recommendation
 
     Args:
         db: Database session
@@ -225,7 +226,7 @@ async def get_performance_statistics(
         period: Time period for statistics
 
     Returns:
-        PerformanceResponse with difficulty and topic statistics
+        PerformanceResponse with difficulty, topic statistics and level recommendation
     """
     # Calculate date range from period
     date_from, date_to = parse_date_range(
@@ -252,7 +253,8 @@ async def get_performance_statistics(
 
 
 def _calculate_performance_statistics(
-        history: list[UserExerciseHistory]
+        history: list[UserExerciseHistory],
+        language: LanguageLevelEnum | None = None
 ) -> PerformanceResponse:
     """
     Calculate performance statistics from exercise history.
@@ -261,13 +263,24 @@ def _calculate_performance_statistics(
     - Statistics per CEFR difficulty level
     - Top performing topics
     - Weak topics needing practice
+    - Recommended difficulty level
 
     Args:
         history: List of user exercise history records
+        language: Optional language filter
 
     Returns:
         PerformanceResponse with difficulty and topic statistics
     """
+    # Early return for empty history
+    if not history:
+        return PerformanceResponse(
+            by_difficulty={},
+            top_topics=[],
+            weak_topics=[],
+            suggested_level=LanguageLevelEnum.A1
+        )
+
     by_difficulty = _calculate_by_difficulty(history)
     top_topics = _calculate_top_topics(history)
     weak_topics = _calculate_top_topics(
@@ -276,17 +289,22 @@ def _calculate_performance_statistics(
         min_total=20,
         max_accuracy=60.0
     )
+    if language:
+        suggested_level = _calculate_suggested_level(by_difficulty)
+    else:
+        suggested_level = None
 
     return PerformanceResponse(
         by_difficulty=by_difficulty,
         top_topics=top_topics,
-        weak_topics=weak_topics
+        weak_topics=weak_topics,
+        suggested_level=suggested_level
     )
 
 
 def _calculate_by_difficulty(
         history: list[UserExerciseHistory],
-) -> dict[str, DifficultyStats]:
+) -> dict[LanguageLevelEnum, DifficultyStats]:
     """
     Calculate statistics per CEFR difficulty level.
 
@@ -306,7 +324,7 @@ def _calculate_by_difficulty(
 
     for level in LanguageLevelEnum:
         # Calculate accuracy for this level
-        accuracy_stats = _calculate_accuracy_stats(history, level)
+        accuracy_stats = _calculate_accuracy_stats(history, level.value)
 
         # Determine master status
         mastered = (accuracy_stats.accuracy_percent >= 80
@@ -351,9 +369,6 @@ def _calculate_top_topics(
     Returns:
         List of TopicStats sorted by accuracy
     """
-    if not history:
-        return []
-
     # Aggregate by topic
     topics = {}
     for h in history:
@@ -420,3 +435,61 @@ def _calculate_top_topics(
         )
 
     return result
+
+
+def _calculate_suggested_level(
+        by_difficulty: dict[str, DifficultyStats]
+) -> LanguageLevelEnum:
+    """
+    Calculate recommended difficulty level based on performance statistics.
+
+    Analyzes user performance across CEFR levels and suggests the most
+    appropriate next level for practice.
+
+    Algorithm:
+    1. Filter levels with minimum 10 exercises
+    2. Find highest comfortable level (accuracy >= 70%)
+    3. If mastered (accuracy >= 80%, total >= 50): suggest next level
+    4. If learning (accuracy >= 70%): continue current level
+    5. If struggling on all levels: suggest lowest attempted level
+    6. Default: A1 for users with insufficient practice
+
+    Args:
+        by_difficulty: Dictionary mapping level names (A1-C2) to DifficultyStats
+
+    Returns:
+        Recommended LanguageLevelEnum (A1, A2, B1, B2, C1, or C2)
+    """
+    levels = [level.value for level in LanguageLevelEnum]
+
+    # Filter levels with minimum attempts
+    attempted_levels = {level: stats for level, stats in by_difficulty.items()
+                        if stats.total_answered > 10}
+
+    if not attempted_levels:
+        return LanguageLevelEnum.A1
+
+    # Find highest level with good performance (70%+)
+    comfortable_levels = [level for level in levels
+                          if level in attempted_levels and
+                          attempted_levels[level].accuracy >= 70]
+
+    if not comfortable_levels:
+        # User struggling on all levels - suggest lowest attempted
+        lowest_suggest_lang = min(
+            attempted_levels.keys(),
+            key=lambda x: levels.index(x)
+        )
+        return LanguageLevelEnum(lowest_suggest_lang)
+
+
+    highest_comfortable = comfortable_levels[-1]
+    stats = attempted_levels[highest_comfortable]
+
+    # Check if mastered (ready for next level)
+    if stats.accuracy >= 80 and stats.total_answered >= 50:
+        next_level_index = levels.index(highest_comfortable) + 1
+        if next_level_index < len(levels):
+            return LanguageLevelEnum(levels[next_level_index])
+
+    return highest_comfortable

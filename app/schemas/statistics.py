@@ -2,6 +2,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, field_validator, Field
 
+from app.schemas.enums import LanguageLevelEnum
+
 
 class OverviewResponse(BaseModel):
     """Overview statistics response."""
@@ -105,6 +107,9 @@ class PerformanceResponse(BaseModel):
         description='Top 5 topics by accuracy')
     weak_topics: list[TopicStats] = Field(
         description='Bottom 5 topics needing practice (accuracy < 60%, min 20 exercises)')
+    suggested_level: LanguageLevelEnum | None = Field(
+        description='Recommended next difficulty level based on performance (only when language filter is applied)'
+    )
 
     model_config = ConfigDict(
         json_schema_extra={
@@ -138,7 +143,8 @@ class PerformanceResponse(BaseModel):
                         'total_answered': 88,
                         'status': 'needs_practice'
                     }
-                ]
+                ],
+                'suggested_level': 'B1'
             }
         }
     )
