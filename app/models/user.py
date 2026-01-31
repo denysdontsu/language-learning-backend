@@ -1,8 +1,17 @@
-from sqlalchemy import Boolean, String, Text, CheckConstraint, BigInteger, ForeignKey
+from sqlalchemy import (
+    Boolean,
+    String,
+    Text,
+    CheckConstraint,
+    BigInteger,
+    ForeignKey,
+    Enum as SQLEnum
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.connection import Base
 from app.db.column_types import bigint_pk, language, created_at
+from app.schemas.enums import UserRoleEnum
 
 
 class User(Base):
@@ -19,7 +28,16 @@ class User(Base):
 
     # Security
     hashed_password: Mapped[str] = mapped_column(Text, nullable=False)
-    role: Mapped[str] = mapped_column(String(20), default='user', nullable=False)
+    role: Mapped[UserRoleEnum] = mapped_column(
+        SQLEnum(
+            UserRoleEnum,
+            name='userrole',
+            values_callable=lambda enum: [e.value for e in enum]
+        ),
+        default=UserRoleEnum.USER,
+        server_default='user',
+        nullable=False
+    )
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
     # Metadata

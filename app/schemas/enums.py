@@ -145,3 +145,13 @@ class ExerciseStatusEnum(str, Enum):
             EXCLUDE_AT=cls.__EXCLUDE_AT)
 
 ExerciseStatusEnum.validate_properties()
+
+
+class UserRoleEnum(str, Enum):
+    """"""
+    USER = 'user'
+    ADMIN = 'admin'
+
+    def is_admin(self) -> bool:
+        """User role enumeration."""
+        return self == UserRoleEnum.ADMIN
