@@ -10,6 +10,7 @@ from app.schemas.user import UserRead
 async def get_users_by_admin(
         db: AsyncSession,
         admin_id: int,
+        search: str | None,
         role: UserRoleEnum | None,
         native_language: LanguageEnum | None,
         active_learning_language: LanguageEnum | None,
@@ -27,6 +28,7 @@ async def get_users_by_admin(
     Args:
         db: Database session
         admin_id: Requesting admin ID (excluded from results)
+        search: Optional search by email or username
         role: Optional role filter
         native_language: Optional native language filter
         active_learning_language: Optional active learning language filter
@@ -51,6 +53,7 @@ async def get_users_by_admin(
     users = await get_users(
         db,
         admin_id,
+        search,
         role,
         native_language,
         active_learning_language,

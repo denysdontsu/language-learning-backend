@@ -1,6 +1,6 @@
 from datetime import date
 
-from sqlalchemy import select
+from sqlalchemy import select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import contains_eager
 
@@ -11,6 +11,7 @@ from app.schemas.enums import UserRoleEnum, LanguageEnum, LanguageLevelEnum
 async def get_users(
         db: AsyncSession,
         admin_id: int,
+        search: str | None,
         role: UserRoleEnum | None,
         native_language: LanguageEnum | None,
         active_learning_language: LanguageEnum | None,
@@ -30,6 +31,7 @@ async def get_users(
     Args:
         db: Database session
         admin_id: Admin user ID to exclude from results
+        search: Search by email or username
         role: Filter by user role
         native_language: Filter by native language
         active_learning_language: Filter by active learning language
@@ -53,6 +55,16 @@ async def get_users(
         .options(contains_eager(User.active_learning_language))
         .where(User.id != admin_id)
     )
+
+    # Search filter
+    if search:
+        stmt = stmt.where(
+            or_(
+                User.email.ilike(f'%{search}%'),
+                User.username.ilike(f'%{search}%')
+            )
+        )
+
     # Filter by active language level
     if level:
         stmt = stmt.where(UserLevelLanguage.level == level)

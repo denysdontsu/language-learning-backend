@@ -20,6 +20,8 @@ async def get_users_endpoint(
         pagination: pagination_dependency,
 
         # Filters
+        search: str | None = Query(None,
+            description='Search by email or username'),
         role: UserRoleEnum = Query(None,
             description='Filter by user role'),
         native_language: LanguageEnum = Query(None,
@@ -42,6 +44,7 @@ async def get_users_endpoint(
     Supports filtering by role, languages, activity status, and registration date.
 
     Query Parameters:
+        search: Search by email or username
         role: Filter by user role (user/admin)
         native_language: Filter by native language
         active_learning_language: Filter by currently active learning language
@@ -62,6 +65,7 @@ async def get_users_endpoint(
     result = await get_users_by_admin(
         db,
         admin.id,
+        search,
         role,
         native_language,
         active_learning_language,
