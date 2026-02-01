@@ -3,8 +3,8 @@ from datetime import datetime
 from pydantic import BaseModel, EmailStr, Field, ConfigDict, field_validator
 
 from app.utils.validators import validate_password_strength, validate_string_field
-from app.schemas.enums import LanguageEnum, LanguageLevelEnum
-from app.schemas.user_level_language import UserLanguageBase
+from app.schemas.enums import LanguageEnum, LanguageLevelEnum, UserRoleEnum
+from app.schemas.user_level_language import UserLanguageBase, UserLanguageBrief
 
 
 class UserBase(BaseModel):
@@ -159,7 +159,6 @@ class UserBriefWithLang(UserBrief):
                 'username': 'denisD',
                 'native_language': 'uk',
                 'active_learning_language': {
-                    'id': 1,
                     'language': 'en',
                     'level': 'B2',
                     'level_description': 'Upper Intermediate'
@@ -169,9 +168,10 @@ class UserBriefWithLang(UserBrief):
     )
 
 
-class UserRead(UserBriefWithLang):
+class UserRead(UserBrief):
     """Schema for user response (for admin)."""
-    role: str
+    active_learning_language: UserLanguageBrief | None
+    role: UserRoleEnum
     is_active: bool
     created_at: datetime
 
