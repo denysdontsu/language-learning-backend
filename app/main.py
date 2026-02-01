@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from slowapi import _rate_limit_exceeded_handler # noqa
 from slowapi.errors import RateLimitExceeded
 
-from app.api.endpoints import auth, users, languages, exercises, user_exercise_history, statistics
+from app.api.endpoints import auth, users, languages, exercises, user_exercise_history, statistics, admin
 from app.core.config import settings
 from app.api.dependencies import limiter
 
@@ -56,3 +56,4 @@ app.include_router(users.router)
 app.include_router(exercises.router)
 app.include_router(user_exercise_history.router)
 app.include_router(statistics.router)
+app.include_router(admin.router)

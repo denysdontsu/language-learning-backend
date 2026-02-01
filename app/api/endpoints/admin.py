@@ -1,8 +1,9 @@
 from datetime import date
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, HTTPException, status
 
 from app.api.dependencies import db_dependency, current_admin_dependency, pagination_dependency
+from app.crud.user import get_user_with_active_language
 from app.schemas.enums import LanguageEnum, UserRoleEnum, LanguageLevelEnum
 from app.schemas.user import UserRead
 from app.services.admin import get_users_by_admin
@@ -72,3 +73,38 @@ async def get_users_endpoint(
     )
 
     return result
+
+
+@router.get('/users/{user_id}',
+           response_model=UserRead,
+           summary='Get user details by ID')
+async def get_user_endpoint(
+        db: db_dependency,
+        admin: current_admin_dependency,
+        user_id: int
+) -> UserRead:
+    """
+    Get detailed information about specific user by ID.
+
+    Admin only. Returns user profile with account information
+    and active learning language if set.
+
+    Path Parameters:
+        user_id: User ID to retrieve
+
+    Returns:
+        User details including role, active status, active learning
+        language, and registration date
+
+    Raises:
+        404: User not found
+        403: Non-admin user attempting access
+    """
+    user = await get_user_with_active_language(db, user_id)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f'User id:{user_id} not found'
+        )
+
+    return UserRead.model_validate(user)
