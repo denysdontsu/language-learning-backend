@@ -164,6 +164,8 @@ async def require_admin(
         )
     return current_user
 
+current_admin_dependency = Annotated[User, Depends(require_admin)]
+"""Authenticated admin user. Use in endpoints requiring admin privileges."""
 
 async def get_pagination_params(
         page: int = Query(1, ge=1, description='Page number(started at 1)'),
