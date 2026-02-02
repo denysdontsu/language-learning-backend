@@ -44,6 +44,8 @@ class ExerciseCreate(ExerciseBase):
     # Options (for type: 'multiple_choice')
     options: Options | None = None
 
+    explanation: str | None = None
+
     @field_validator('topic', mode='after')
     @classmethod
     def validate_topic(cls, v):
@@ -80,7 +82,8 @@ class ExerciseCreate(ExerciseBase):
                     'correct_answer': 'Я живу тут 5 років',
                     'answer_language': 'uk',
                     'question_translation': None,
-                    'question_translation_language': None
+                    'question_translation_language': None,
+                    'explanation': 'Present Perfect is used for actions that started in the past and continue to the present. "For 5 years" indicates duration.'
                 },
                 # Example 2: Multiple choice
                 {
@@ -98,7 +101,8 @@ class ExerciseCreate(ExerciseBase):
                     'correct_answer': 'went',
                     'answer_language': 'en',
                     'question_translation': 'Вчора я cходив до магазину',
-                    'question_translation_language': 'uk'
+                    'question_translation_language': 'uk',
+                    'explanation': 'Past Simple is used with "yesterday". The verb "go" becomes "went" in past tense (irregular verb).'
                 },
                 # Example 3: Fill in the blank
                 {
@@ -111,7 +115,8 @@ class ExerciseCreate(ExerciseBase):
                     'correct_answer': 'an',
                     'answer_language': 'en',
                     'question_translation': 'У мене є яблуко',
-                    'question_translation_language': 'uk'
+                    'question_translation_language': 'uk',
+                    'explanation': "Use 'an' before words starting with a vowel sound. 'Apple' starts with 'a' (vowel), so we use 'an'."
                 }
             ]
         }
@@ -131,6 +136,7 @@ class ExerciseUpdate(BaseModel):
     difficult_level: LanguageLevelEnum | None = None
     type: ExerciseTypeEnum | None = None
     options: Options | None = None
+    explanation: str | None = None
 
     # Question
     question_text: str | None = Field(None, min_length=1)
@@ -166,7 +172,8 @@ class ExerciseUpdate(BaseModel):
                     'correct_answer': None,
                     'answer_language': None,
                     'question_translation': None,
-                    'question_translation_language': None
+                    'question_translation_language': None,
+                    'explanation': None
                 },
                 # Example 2: Update question text
                 {
@@ -179,7 +186,8 @@ class ExerciseUpdate(BaseModel):
                     'correct_answer': None,
                     'answer_language': None,
                     'question_translation': None,
-                    'question_translation_language': None
+                    'question_translation_language': None,
+                    'explanation': None
                 }
             ]
         }
