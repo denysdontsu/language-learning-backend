@@ -3,11 +3,12 @@ from datetime import date
 from fastapi import APIRouter, Query, HTTPException, status
 
 from app.api.dependencies import db_dependency, current_admin_dependency, pagination_dependency
+from app.crud.admin import create_exercise
 from app.crud.user import get_user_with_active_language
 from app.schemas.enums import LanguageEnum, UserRoleEnum, LanguageLevelEnum
+from app.schemas.exercise import ExerciseRead, ExerciseCreate
 from app.schemas.user import UserRead
 from app.services.admin import get_users_by_admin
-
 
 router = APIRouter(prefix='/admin', tags=['Admin'])
 
@@ -112,3 +113,36 @@ async def get_user_endpoint(
         )
 
     return UserRead.model_validate(user)
+
+
+@router.post('/exercises',
+             response_model=ExerciseRead,
+             status_code=status.HTTP_201_CREATED,
+             summary='Create new exercise')
+async def create_exercise_endpoint(
+        db: db_dependency,
+        admin: current_admin_dependency,
+        data: ExerciseCreate
+) -> ExerciseRead:
+    """
+    Create a new exercise.
+
+    Admin only. Creates exercise with automatic validation of:
+    - Options for multiple_choice type (required)
+    - Translation pair completeness (both fields or both None)
+    - Translation usage rules (not allowed for fill_blank)
+    - Topic normalization to title case
+
+    Request Body:
+        ExerciseCreate with exercise data
+
+    Returns:
+        Created exercise with generated ID and metadata
+
+    Raises:
+        400: Validation error (invalid options, translation rules)
+        403: Non-admin user attempting access
+    """
+    created_exercise = await create_exercise(db, data)
+
+    return ExerciseRead.model_validate(created_exercise)

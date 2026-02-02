@@ -4,8 +4,9 @@ from sqlalchemy import select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import contains_eager
 
-from app.models import User, UserLevelLanguage
+from app.models import User, UserLevelLanguage, Exercise
 from app.schemas.enums import UserRoleEnum, LanguageEnum, LanguageLevelEnum
+from app.schemas.exercise import ExerciseCreate
 
 
 async def get_users(
@@ -99,3 +100,44 @@ async def get_users(
 
     result = await db.execute(stmt)
     return list(result.scalars().all())
+
+
+async def create_exercise(
+        db: AsyncSession,
+        data: ExerciseCreate
+) -> Exercise:
+    """
+    Create new exercise in database.
+
+    Validation is already performed by ExerciseCreate schema before
+    this function is called.
+
+    Args:
+        db: Database session
+        data: Validated exercise data from ExerciseCreate schema
+
+    Returns:
+        Created Exercise model with generated ID and timestamps
+
+    Note:
+        - is_active defaults to True (database default)
+        - added_at is set automatically by database
+        - Topic is already normalized to title case by schema validator
+    """
+    new_exercise = Exercise(
+        topic=data.topic,
+        difficult_level=data.difficult_level,
+        type=data.type,
+        options=data.options,
+        question_text=data.question_text,
+        question_language=data.question_language,
+        correct_answer=data.correct_answer,
+        answer_language=data.answer_language,
+        question_translation=data.question_translation,
+        question_translation_language=data.question_translation_language
+    )
+    db.add(new_exercise)
+    await db.commit()
+    await db.refresh(new_exercise)
+
+    return new_exercise
