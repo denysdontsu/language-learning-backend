@@ -1,6 +1,8 @@
 from datetime import datetime
+from typing import Self
 
-from pydantic import BaseModel, EmailStr, Field, ConfigDict, field_validator
+from fastapi import HTTPException, status
+from pydantic import BaseModel, EmailStr, Field, ConfigDict, field_validator, model_validator
 
 from app.utils.validators import validate_password_strength, validate_string_field
 from app.schemas.enums import LanguageEnum, LanguageLevelEnum, UserRoleEnum
@@ -98,6 +100,26 @@ class UserUpdate(BaseModel):
                 'name': 'Denis',
                 'username': None,
                 'native_language': 'en',
+            }
+        }
+    )
+
+
+class UserUpdateByAdmin(UserUpdate):
+    """Schema for updating user profile by admin."""
+    role: UserRoleEnum | None = None
+    is_active: bool | None = None
+
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            'example': {
+                'email': None,
+                'name': 'Denis',
+                'username': None,
+                'native_language': 'en',
+                'role': 'admin',
+                'is_active': False
             }
         }
     )

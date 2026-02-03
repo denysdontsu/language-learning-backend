@@ -9,7 +9,7 @@ from app.crud.user import (
     get_user_by_email,
     get_user_by_username,
     update_user)
-from app.schemas.user import UserUpdate, UserChangePassword
+from app.schemas.user import UserUpdate, UserChangePassword, UserUpdateByAdmin
 
 
 async def get_user_profile(
@@ -47,7 +47,7 @@ async def get_user_profile(
 async def update_user_profile(
         db: AsyncSession,
         user: User,
-        data: UserUpdate
+        data: UserUpdate | UserUpdateByAdmin
 ) -> User:
     """
     Update user profile with validation.
@@ -59,7 +59,7 @@ async def update_user_profile(
     Args:
         db: Database session
         user: Current user (from authentication)
-        data: Fields to update (email, name, username, native_language)
+        data: Fields to update (UserUpdate for users, UserUpdateByAdmin for admins)
 
     Returns:
         User: Updated user object

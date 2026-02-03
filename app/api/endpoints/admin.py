@@ -7,8 +7,8 @@ from app.crud.admin import create_exercise
 from app.crud.user import get_user_with_active_language
 from app.schemas.enums import LanguageEnum, UserRoleEnum, LanguageLevelEnum
 from app.schemas.exercise import ExerciseRead, ExerciseCreate
-from app.schemas.user import UserRead
-from app.services.admin import get_users_by_admin
+from app.schemas.user import UserRead, UserUpdateByAdmin
+from app.services.admin import get_users_by_admin, update_user_by_admin_service
 
 router = APIRouter(prefix='/admin', tags=['Admin'])
 
@@ -113,6 +113,46 @@ async def get_user_endpoint(
         )
 
     return UserRead.model_validate(user)
+
+
+@router.patch('/users/{user_id}',
+              response_model=UserRead,
+              summary='Update user')
+async def update_user_by_admin_endpoint(
+        db: db_dependency,
+        admin: current_admin_dependency,
+        user_id: int,
+        data_user: UserUpdateByAdmin,
+) -> UserRead:
+    """
+    Update user profile and account settings.
+
+    Admin only. Allows updating:
+    - Basic profile info (email, username, name, native language)
+    - Admin-specific fields (role, active status)
+
+    Path Parameters:
+        user_id: User ID to update
+
+    Request Body:
+        UserUpdateByAdmin with fields to update (all optional)
+
+    Returns:
+        Updated user profile
+
+    Raises:
+        400: Validation error
+        403: Cannot modify own role/status
+        404: User not found
+        409: Email/username already taken
+    """
+    updated_user = await update_user_by_admin_service(
+        db,
+        admin.id,
+        user_id,
+        data_user
+    )
+    return UserRead.model_validate(updated_user)
 
 
 @router.post('/exercises',

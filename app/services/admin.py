@@ -1,10 +1,22 @@
 from datetime import date, datetime, time, timezone
 
+from fastapi import HTTPException, status
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.crud.admin import get_users
+from app.crud.user import (
+    get_user_by_email,
+    get_user_by_username,
+    update_user,
+    get_user_with_active_language
+)
+from app.models import User
 from app.schemas.enums import LanguageEnum, UserRoleEnum, LanguageLevelEnum
-from app.schemas.user import UserRead
+from app.schemas.user import UserRead, UserUpdateForAdmin
+from app.schemas.user_level_language import UserLanguageLevelUpdate
+from app.services.user import update_user_profile
+from app.services.user_language import update_or_create_user_language
 
 
 async def get_users_by_admin(
@@ -66,3 +78,52 @@ async def get_users_by_admin(
     )
 
     return [UserRead.model_validate(user) for user in users]
+
+
+async def update_user_by_admin_service(
+        db: AsyncSession,
+        admin_id: int,
+        user_id: int,
+        data: UserUpdateForAdmin,
+) -> User:
+    """
+    Update user profile by admin.
+
+    Validates user existence and delegates to shared update logic.
+    Handles both regular profile fields and admin-specific fields.
+
+    Args:
+        db: Database session
+        admin_id: Admin ID performing the update
+        user_id: User ID to update
+        data: Update data (all fields optional)
+
+    Returns:
+        User: Updated User ORM model
+
+    Raises:
+        HTTPException 403: Admin cannot modify your own role or active status
+        HTTPException 404: User not found
+        HTTPException 409: Email/username conflict
+        HTTPException 400: Validation error
+    """
+    # Prevent admin from changing own critical fields
+    if admin_id == user_id:
+        if data.role is not None or data.is_active is not None:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail='Cannot modify your own role or active status'
+            )
+
+    # Get user with active language
+    current_user = await get_user_with_active_language(db, user_id)
+    if not current_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"User {user_id} don't exist"
+        )
+
+    # Delegate to shared update logic
+    updated_user = await update_user_profile(db, current_user, data)
+
+    return updated_user

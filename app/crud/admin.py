@@ -141,3 +141,5 @@ async def create_exercise(
     await db.refresh(new_exercise)
 
     return new_exercise
+
+
