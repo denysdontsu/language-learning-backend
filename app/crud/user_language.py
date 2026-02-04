@@ -1,7 +1,7 @@
 from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from  app.models.user_level_language import UserLevelLanguage
+from app.models.user_level_language import UserLevelLanguage
 from app.schemas.enums import LanguageEnum, LanguageLevelEnum
 
 

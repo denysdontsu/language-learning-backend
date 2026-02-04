@@ -1,22 +1,14 @@
 from datetime import date, datetime, time, timezone
 
 from fastapi import HTTPException, status
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.crud.admin import get_users
-from app.crud.user import (
-    get_user_by_email,
-    get_user_by_username,
-    update_user,
-    get_user_with_active_language
-)
+from app.crud.user import get_user_with_active_language
 from app.models import User
 from app.schemas.enums import LanguageEnum, UserRoleEnum, LanguageLevelEnum
-from app.schemas.user import UserRead, UserUpdateForAdmin
-from app.schemas.user_level_language import UserLanguageLevelUpdate
+from app.schemas.user import UserRead, UserUpdateByAdmin
 from app.services.user import update_user_profile
-from app.services.user_language import update_or_create_user_language
 
 
 async def get_users_by_admin(
@@ -84,7 +76,7 @@ async def update_user_by_admin_service(
         db: AsyncSession,
         admin_id: int,
         user_id: int,
-        data: UserUpdateForAdmin,
+        data: UserUpdateByAdmin,
 ) -> User:
     """
     Update user profile by admin.

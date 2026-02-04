@@ -1,8 +1,6 @@
 from datetime import datetime
-from typing import Self
 
-from fastapi import HTTPException, status
-from pydantic import BaseModel, EmailStr, Field, ConfigDict, field_validator, model_validator
+from pydantic import BaseModel, EmailStr, Field, ConfigDict, field_validator
 
 from app.utils.validators import validate_password_strength, validate_string_field
 from app.schemas.enums import LanguageEnum, LanguageLevelEnum, UserRoleEnum

@@ -3,7 +3,7 @@ from datetime import datetime
 
 from sqlalchemy import select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import contains_eager, joinedload
+from sqlalchemy.orm import contains_eager
 
 from app.models import UserExerciseHistory, Exercise
 from app.schemas.enums import LanguageEnum, LanguageLevelEnum, ExerciseStatusEnum
