@@ -95,6 +95,69 @@ The project is in early development stage.
     - Validates answer (case-insensitive), determines status, saves to history
     - Returns correct answer and optional explanation
 
+### Exercise History
+
+**Authentication required**
+
+- **GET** `/history/` - Get user exercise history
+    - Query params:
+        - `order` (optional) - Sort order by completion date: `asc` or `desc` (default: `desc`)
+        - `language` (optional) - Filter by practiced language (ISO 639-1: en, uk, de)
+        - `difficult_level` (optional) - Filter by CEFR level (A1-C2)
+        - `status` (optional) - Filter by completion status: `correct`, `incorrect`, `skip`
+        - `period` (optional) - Quick time period: `7d`, `30d`, `3m`, `1y`, `all` (overrides custom dates)
+        - `date_from` (optional) - Filter from date (YYYY-MM-DD, inclusive)
+        - `date_to` (optional) - Filter to date (YYYY-MM-DD, inclusive)
+        - `limit` (optional) - Max records to return (from pagination dependency)
+        - `offset` (optional) - Records to skip (from pagination dependency)
+    - Response: `list[ExerciseHistoryBrief]`
+    - Returns paginated exercise history with filtering options
+    - Date filtering: use predefined `period` OR custom `date_from`/`date_to` range
+    - Language filter matches either question or answer language
+
+- **GET** `/history/{history_id}` - Get exercise history record by ID
+    - Path param: `history_id` - Exercise history record ID
+    - Response: `ExerciseHistoryRead`
+    - Returns detailed history record with full exercise information
+    - Includes correct answer, options, translation, and explanation
+    - Returns 404 if record not found or doesn't belong to authenticated user
+
+### User Statistics
+
+**Authentication required**
+
+- **GET** `/users/me/statistics/` - Get user statistics overview
+    - Query params:
+        - `language` (optional) - Filter by language (ISO 639-1: en, uk, de, null = all languages)
+        - `period` (optional) - Time period: `7d`, `30d`, `3m`, `1y`, `all` (default: `all`)
+    - Response: `OverviewResponse`
+    - Returns aggregated user metrics:
+        - Total exercises completed (including and excluding skipped)
+        - Overall accuracy percentage (from answered exercises only)
+        - Current consecutive days streak
+        - Whether at least one exercise was completed today
+        - Total study time in hours
+    - Without language filter: aggregates across all practiced languages
+    - With language filter: shows statistics for that language only
+
+- **GET** `/users/me/statistics/performance` - Get detailed performance statistics
+    - Query params:
+        - `language` (optional) - Filter by language (ISO 639-1: en, uk, de, null = all languages)
+        - `period` (optional) - Time period: `7d`, `30d`, `3m`, `1y`, `all` (default: `all`)
+    - Response: `PerformanceResponse`
+    - Returns detailed performance metrics:
+        - **by_difficulty**: Accuracy and mastery status per CEFR level (A1-C2)
+        - **top_topics**: Top 5 topics by accuracy
+        - **weak_topics**: Topics needing practice (accuracy < 60%, min 20 exercises)
+        - **suggested_level**: Recommended next difficulty level (only when language specified)
+    - Mastery criteria:
+        - Difficulty level: accuracy ≥ 80% AND total ≥ 100 exercises
+        - Topic status: mastered (85%+), good (70-85%), learning (50-70%), needs_practice (<50%)
+    - Level recommendation criteria:
+        - Comfortable zone: accuracy ≥ 70% AND total ≥ 10 exercises
+        - Ready for next level: accuracy ≥ 80% AND total ≥ 50 exercises
+        - Default: A1 for new learners with insufficient practice
+
 ---
 
 ## 🛠️ Tech Stack
@@ -125,13 +188,13 @@ The project is in early development stage.
 
 - **Database layer:**
     - SQLAlchemy 2.0 async models with relationships
-    - Alembic migrations (9 revisions)
+    - Alembic migrations (12 revisions)
     - Database constraints (email format, positive time, translation completeness)
     - Optimized indexes (partial, composite, unique)
   
 - **Schema layer:**
     - Pydantic v2 schemas with validation
-    - Enums for languages, levels, exercise types and exercise status
+    - Enums for languages, levels, exercise types, exercise status and user role
     - Business logic validation (password, exercise options, translations, exercise status)
     - Circular import resolution using TYPE_CHECKING
   
@@ -140,29 +203,35 @@ The project is in early development stage.
     - Async PostgreSQL connection
     - Security utilities (JWT, password hashing, Argon2)
     - Dependency injection with FastAPI
+    - Helper functions: enum validation, date range parsing, option key extraction
+    - Normalizers: topic formatting, answer cleanup
   
 - **CRUD layer:**
     - Users: create, read by id/email/username, update, active language management
     - User languages: create, read, update, delete
     - Exercise: get topics, retrieve by criteria with spaced repetition
-    - Exercise history: create submission records
+    - Exercise history: create submission records, retrieve with filters and pagination
   
 - **Services layer:**
     - Authentication: user registration (simple & with language), login
     - User management: profile updates, password changes
     - User languages: add/update learning languages, delete
     - Exercise: retrieve practice exercises, validate and save submissions
+    - Statistics: overview metrics, performance analysis, difficulty tracking
+    - History: exercise history retrieval with filtering
   
 - **API endpoints:**
     - Authentication: `/auth/register`, `/auth/register/complete`, `/auth/login`, `/auth/token`
     - User: `/users/me`, `/users/me/password`
     - Languages: `/users/me/languages`, `/users/me/languages/{language}`
     - Exercises: `/exercises/topics`, `/exercises/next`, `/exercises/{id}/submit`
+    - History: `/history/`, `/history/{history_id}`
+    - Statistics: `/users/me/statistics/`, `/users/me/statistics/performance`
 
 ### 🟡 In Development
 
-- User statistics and progress tracking
-- Performance metrics endpoints
+- Admin panel for user and exercise management
+- Bulk exercise import functionality
 
 ### 🔴 Planned
 
@@ -187,7 +256,7 @@ user
 ├─ hashed_password
 ├─ native_language (enum: uk, en, de)
 ├─ active_learning_language_id (FK → user_level_languages.id)
-├─ role (default: 'user')
+├─ role (enum: default: 'user', 'admin')
 ├─ is_active (default: true)
 └─ created_at (timestamp, default: now())
 
@@ -209,6 +278,7 @@ exercise
 ├─ correct_answer
 ├─ answer_language (enum: uk, en, de)
 ├─ options (JSONB, nullable)
+├─ explanation (nullable | text)
 ├─ question_translation (nullable | text)
 ├─ question_translation_language (nullable | enum: uk, en, de)
 ├─ is_active (default: true)
@@ -235,6 +305,7 @@ user_exercise_history
 - **LanguageLevelEnum:** A1, A2, B1, B2, C1, C2 (CEFR standard)
 - **ExerciseTypeEnum:** sentence_translation, multiple_choice, fill_blank
 - **ExerciseStatusEnum:** correct (14-day timeout), skip (3-day timeout), incorrect (no timeout)
+- **UserRoleEnum:**  admin, user
 
 ---
 
@@ -265,59 +336,66 @@ user_exercise_history
 ```sql
 app/
 ├── core/
-│   ├── config.py             # Pydantic Settings
-│   └── security.py           # JWT & Argon2 
+│   ├── config.py                    # Pydantic Settings
+│   └── security.py                  # JWT & Argon2 
 │
 ├── db/
 │   ├── __init__.py
-│   ├── column_types.py       # Custom SQLAlchemy types
-│   └── connection.py         # Async SQLAlchemy engine
+│   ├── column_types.py              # Custom SQLAlchemy types
+│   └── connection.py                # Async SQLAlchemy engine
 │
-├── api/                      # Partially implemented
+├── api/                             # Partially implemented
 │   ├── endpoints/
-│   │   ├── auth.py           # Authentication endpoints
-│   │   ├── exercises.py      # Exercise practice endpoints
-│   │   ├── users.py          # User management endpoints
-│   │   └── languages.py      # Language management endpoints
-│   └── dependencies.py       # Dependency injection
+│   │   ├── auth.py                  # Authentication endpoints
+│   │   ├── exercises.py             # Exercise practice endpoints
+│   │   ├── users.py                 # User management endpoints
+│   │   ├── languages.py             # Language management endpoints
+│   │   ├── statistics.py            # User learning statistics endpoints
+│   │   └── user_exercise_history.py # User exercise history endpoints
+│   └── dependencies.py              # Dependency injection
 │
-├── crud/                     # CRUD operations
+├── crud/                            # CRUD operations
 │   ├── user.py              
 │   ├── user_language.py
-│   ├── exercise.p
-│   └── exercise_history.py
+│   ├── exercise.py
+│   └── user_exercise_history.py 
 │
-├── services/                 # Partially implemented
+├── services/                        # Partially implemented
 │   ├── __init__.py
-│   ├── auth.py               # Registration & authentication
-│   ├── exercise.py           # Exercise logic with validation
-│   ├── user.py               # User management logic
-│   └── user_language.py      # Language management logic
+│   ├── auth.py                      # Registration & authentication
+│   ├── exercise.py                  # Exercise logic with validation
+│   ├── statistics.py                # Statistics calculation and aggregation logic
+│   ├── user.py                      # User management logic
+│   ├── user_exercise_history.py     # User exercise history logic
+│   └── user_language.py             # Language management logic
 │
-├── models/                   # SQLAlchemy models
+├── models/                          # SQLAlchemy models
 │   ├── __init__.py
 │   ├── user.py
 │   ├── user_level_language.py
 │   ├── exercise.py
 │   └── user_exercise_history.py
 │
-├── schemas/                  # Pydantic schemas & Enums
+├── schemas/                         # Pydantic schemas & Enums
 │   ├── __init__.py
-│   ├── common.py             # Shared schemas (Options)
-│   ├── enums.py              # Application enums
-│   ├── jwt_token.py          # JWT token schemas
+│   ├── common.py                    # Shared schemas (Options)
+│   ├── enums.py                     # Application enums
+│   ├── jwt_token.py                 # JWT token schemas
 │   ├── user.py
 │   ├── user_level_language.py
 │   ├── exercise.py
-│   └── user_exercise_history.py
+│   ├── user_exercise_history.py
+│   └── statistics.py
 │
 ├── utils/                    
-│   ├── validators.py         # Business logic validation
-│   └── enum_utils.py         # Enum helpers
+│   ├── validators.py               # Business logic validation
+│   ├── normalizers.py              # Data normalization utilities 
+│   ├── helpers.py                  # Stateless helper functions
+│   └── enum_utils.py               # Enum helpers
 │
-└── main.py                   # FastAPI app
+└── main.py                         # FastAPI app
 
-migrations/                   # Alembic migrations
+migrations/                         # Alembic migrations
 ├── versions/
 │   ├── 99a19fb9275f_initial.py
 │   ├── f47b1a71c0df_add_translation_completeness_check.py
@@ -327,8 +405,11 @@ migrations/                   # Alembic migrations
 │   ├── 808ed363444b_remove_duplicate_unique_index_on_user_.py
 │   ├── e9d426e6d045_add_fill_blank_to_exercise_type_enum.py
 │   ├── 860522b56861_fix_foreign_key_user_fk_cascade_.py
-│   └── 756af3813bf4_add_status_column_with_check_constraint.py
-
+│   ├── 756af3813bf4_add_status_column_with_check_constraint.py
+│   ├── bf1b5c6bd1d9_remove_is_correct_column.py
+│   ├── 9d7c65ea9a7c_add_user_role_enum.py
+│   └── b54982218f73_add_explanation_column_to_exercises.py
+│
 ├── env.py
 └── script.py.mako
 ```
@@ -448,8 +529,8 @@ API is in active development and subject to changes.
 - [x]  Exercise CRUD
 - [x]  Exercise submission & validation
 - [x]  Exercise endpoint
-- [ ]  History tracking
-- [ ]  Statistics calculation
+- [x]  History tracking
+- [x]  Statistics calculation
 
 ### Phase 3: Admin & Polish
 
@@ -487,4 +568,4 @@ GitHub: [@denysdontsu](https://github.com/denysdontsu)
 
 **Version:** 0.1.0-alpha
 
-**Last updated:** January 2026
+**Last updated:** February 2026
