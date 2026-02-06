@@ -6,7 +6,7 @@ from app.schemas.enums import LanguageLevelEnum
 from app.schemas.exercise import ExerciseQuestion, ExerciseCorrectAnswer, ExerciseUserAnswer
 from app.services.exercise import get_exercise_service, check_and_save_submission
 
-router = APIRouter(prefix='/exercises', tags=['Exercises'])
+router = APIRouter()
 
 @router.get('/topics',
            response_model=list[str],

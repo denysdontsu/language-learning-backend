@@ -13,7 +13,7 @@ from app.services.auth import (
     register_user_with_language,
     authenticate_user)
 
-router = APIRouter(prefix='/auth', tags=['Authentication'])
+router = APIRouter()
 
 @router.post('/register',
              status_code=status.HTTP_201_CREATED,

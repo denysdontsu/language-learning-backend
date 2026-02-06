@@ -13,7 +13,7 @@ from app.services.user import (
     update_user_profile,
     change_password)
 
-router = APIRouter(prefix='/users/me', tags=['Users'])
+router = APIRouter()
 
 @router.get('/',
             response_model= Union[UserBriefWithLang, UserBrief],

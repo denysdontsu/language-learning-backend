@@ -7,7 +7,7 @@ from app.schemas.enums import LanguageEnum
 from app.schemas.statistics import OverviewResponse, PerformanceResponse
 from app.services.statistics import get_basic_statistics, get_performance_statistics
 
-router = APIRouter(prefix='/users/me/statistics', tags=['Statistics'])
+router = APIRouter()
 
 
 @router.get('/',

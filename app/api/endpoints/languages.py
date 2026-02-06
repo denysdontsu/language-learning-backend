@@ -10,7 +10,7 @@ from app.services.user_language import (
     update_or_create_user_language,
     delete_user_learning_language)
 
-router = APIRouter(prefix='/users/me/languages', tags=['Languages'])
+router = APIRouter()
 
 
 @router.get('/',

@@ -3,21 +3,19 @@ from datetime import date
 from fastapi import APIRouter, Query, HTTPException, status
 
 from app.api.dependencies import db_dependency, current_admin_dependency, pagination_dependency
-from app.crud.admin import create_exercise
 from app.crud.user import get_user_with_active_language
 from app.schemas.enums import LanguageEnum, UserRoleEnum, LanguageLevelEnum
-from app.schemas.exercise import ExerciseRead, ExerciseCreate
 from app.schemas.user import UserRead, UserUpdateByAdmin
-from app.schemas.user_level_language import UserLanguageLevelUpdate, UserLanguageBrief
-from app.services.admin import (
-    get_users_by_admin,
-    update_user_by_admin_service,
-    update_language_by_admin_service
+from app.services.admin.user import get_users_by_admin, update_user_by_admin_service
+
+
+router = APIRouter(
+    prefix='/users',
+    tags=['Admin / Users']
 )
 
-router = APIRouter(prefix='/admin', tags=['Admin'])
 
-@router.get('/users',
+@router.get('/',
             response_model=list[UserRead],
             summary='Get users list with filters')
 async def get_users_endpoint(
@@ -85,12 +83,11 @@ async def get_users_endpoint(
     return result
 
 
-@router.get('/users/{user_id}',
+@router.get('/{user_id}',
            response_model=UserRead,
            summary='Get user details by ID')
 async def get_user_endpoint(
         db: db_dependency,
-        admin: current_admin_dependency,
         user_id: int
 ) -> UserRead:
     """
@@ -120,7 +117,7 @@ async def get_user_endpoint(
     return UserRead.model_validate(user)
 
 
-@router.patch('/users/{user_id}',
+@router.patch('/{user_id}',
               response_model=UserRead,
               summary='Update user')
 async def update_user_by_admin_endpoint(
@@ -158,88 +155,3 @@ async def update_user_by_admin_endpoint(
         data_user
     )
     return UserRead.model_validate(updated_user)
-
-
-@router.post('users/{user_id}/languages/{language}',
-              response_model=UserLanguageBrief,
-              summary='Add or update user learning language')
-async def update_or_create_user_language_endpoint(
-        db: db_dependency,
-        admin: current_admin_dependency,
-        user_id: int,
-        language: LanguageEnum,
-        data: UserLanguageLevelUpdate
-) -> UserLanguageBrief:
-    """
-    Add new language to learning list or update existing one.
-
-    Admin only. Creates language if not exists, updates level if exists.
-    Can optionally set as active learning language.
-
-    If language already in learning list:
-    - Updates proficiency level if provided
-    - Returns existing entry if level not provided
-
-    If language not in learning list:
-    - Adds language with specified level (defaults to A1)
-
-    Active language behavior:
-        - Set make_active=true to explicitly activate
-        - Auto-activates if user has no active language (first language)
-
-    Path Parameters:
-        user_id: User ID to modify
-        language: Language code (en, uk, de)
-
-    Request Body:
-        UserLanguageLevelUpdate (optional):
-        - level: CEFR level (A1-C2), defaults to A1 for new languages
-        - make_active: Set as active language (default: false)
-
-    Returns:
-        UserLanguageBrief: Created or updated language entry (201 Created)
-
-    Raises:
-        404: User not found
-        400: Invalid language or level
-    """
-    updated_user_language = await update_language_by_admin_service(
-        db,
-        user_id,
-        language,
-        data
-    )
-    return UserLanguageBrief.model_validate(updated_user_language)
-
-
-@router.post('/exercises',
-             response_model=ExerciseRead,
-             status_code=status.HTTP_201_CREATED,
-             summary='Create new exercise')
-async def create_exercise_endpoint(
-        db: db_dependency,
-        admin: current_admin_dependency,
-        data: ExerciseCreate
-) -> ExerciseRead:
-    """
-    Create a new exercise.
-
-    Admin only. Creates exercise with automatic validation of:
-    - Options for multiple_choice type (required)
-    - Translation pair completeness (both fields or both None)
-    - Translation usage rules (not allowed for fill_blank)
-    - Topic normalization to title case
-
-    Request Body:
-        ExerciseCreate with exercise data
-
-    Returns:
-        Created exercise with generated ID and metadata
-
-    Raises:
-        400: Validation error (invalid options, translation rules)
-        403: Non-admin user attempting access
-    """
-    created_exercise = await create_exercise(db, data)
-
-    return ExerciseRead.model_validate(created_exercise)

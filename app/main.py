@@ -1,11 +1,15 @@
+# Third-party
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import _rate_limit_exceeded_handler # noqa
 from slowapi.errors import RateLimitExceeded
 
-from app.api.endpoints import auth, users, languages, exercises, user_exercise_history, statistics, admin
-from app.core.config import settings
+# Dependencies
 from app.api.dependencies import limiter
+
+# App
+from app.api.endpoints import api_router
+from app.core.config import settings
 
 
 app = FastAPI(
@@ -50,10 +54,4 @@ async def health_check():
     return {'status': 'healthy'}
 
 # Include routers
-app.include_router(auth.router)
-app.include_router(languages.router)
-app.include_router(users.router)
-app.include_router(exercises.router)
-app.include_router(user_exercise_history.router)
-app.include_router(statistics.router)
-app.include_router(admin.router)
+app.include_router(api_router)

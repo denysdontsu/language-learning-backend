@@ -10,7 +10,7 @@ from app.schemas.user_exercise_history import ExerciseHistoryBrief, ExerciseHist
 from app.services.user_exercise_history import get_exercise_history_by_id_service
 from app.utils.helpers import parse_date_range
 
-router = APIRouter(prefix='/history', tags=['History'])
+router = APIRouter()
 
 @router.get('/',
             response_model=list[ExerciseHistoryBrief],
