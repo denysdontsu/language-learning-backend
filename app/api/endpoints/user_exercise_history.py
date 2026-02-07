@@ -1,14 +1,34 @@
+# Standard library
 from datetime import date
 from typing import Literal
 
+# Third-party
 from fastapi import APIRouter, Query
 
-from app.api.dependencies import db_dependency, pagination_dependency, current_active_user_dependency
-from app.crud.user_exercise_history import get_exercise_history_by_user
-from app.schemas.enums import LanguageLevelEnum, LanguageEnum, ExerciseStatusEnum
-from app.schemas.user_exercise_history import ExerciseHistoryBrief, ExerciseHistoryRead
-from app.services.user_exercise_history import get_exercise_history_by_id_service
+# Dependencies
+from app.api.dependencies import (
+    db_dependency,
+    pagination_dependency,
+    current_active_user_dependency
+)
+
+# Helpers
 from app.utils.helpers import parse_date_range
+
+# CRUD
+from app.crud.user_exercise_history import get_exercise_history_by_user
+
+# Schemas
+from app.schemas import (
+    LanguageLevelEnum,
+    LanguageEnum,
+    ExerciseStatusEnum,
+    ExerciseHistoryBrief,
+    ExerciseHistoryRead
+)
+
+# Services
+from app.services.user_exercise_history import get_exercise_history_by_id_service
 
 router = APIRouter()
 

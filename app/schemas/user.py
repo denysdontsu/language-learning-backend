@@ -1,10 +1,20 @@
+# Standard library
 from datetime import datetime
 
+# Third-party
 from pydantic import BaseModel, EmailStr, Field, ConfigDict, field_validator
 
+# Schemas
+from app.schemas import (
+    LanguageEnum,
+    LanguageLevelEnum,
+    UserRoleEnum,
+    UserLanguageBrief,
+    UserLanguageBase
+)
+
+# Utils
 from app.utils.validators import validate_password_strength, validate_string_field
-from app.schemas.enums import LanguageEnum, LanguageLevelEnum, UserRoleEnum
-from app.schemas.user_level_language import UserLanguageBase, UserLanguageBrief
 
 
 class UserBase(BaseModel):

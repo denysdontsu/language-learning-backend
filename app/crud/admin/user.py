@@ -1,11 +1,20 @@
+# Standard library
 from datetime import date
 
+# Third-party
 from sqlalchemy import select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import contains_eager
 
+# Models
 from app.models import User, UserLevelLanguage
-from app.schemas.enums import UserRoleEnum, LanguageEnum, LanguageLevelEnum
+
+# Schemas
+from app.schemas import (
+    UserRoleEnum,
+    LanguageEnum,
+    LanguageLevelEnum
+)
 
 async def get_users(
         db: AsyncSession,

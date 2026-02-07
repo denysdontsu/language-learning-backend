@@ -1,15 +1,19 @@
+# Standard library
 from datetime import timedelta
 
+# Third-party
 from sqlalchemy import or_, and_, select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
+# Models
 from app.models import Exercise, User, UserExerciseHistory
-from app.schemas.enums import (
+
+from app.schemas import (
     LanguageLevelEnum,
     LanguageEnum,
     ExerciseStatusEnum,
-    ExerciseTypeEnum)
-
+    ExerciseTypeEnum
+)
 
 async def get_all_topics(
         db: AsyncSession,

@@ -1,10 +1,18 @@
+# Standard library
 from datetime import datetime
 from typing import Self
 
+# Third-party
 from pydantic import BaseModel, Field, ConfigDict, model_validator, computed_field
 
-from app.schemas.enums import ExerciseStatusEnum
-from app.schemas.exercise import ExerciseBrief, ExerciseBriefForHistory
+# Schemas
+from app.schemas import (
+    ExerciseStatusEnum,
+    ExerciseBrief,
+    ExerciseBriefForHistory
+)
+
+# Utils
 from app.utils.validators import validate_exercise_status
 
 

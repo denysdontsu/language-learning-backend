@@ -1,3 +1,5 @@
+# Third-party
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import (
     Boolean,
     String,
@@ -7,11 +9,13 @@ from sqlalchemy import (
     ForeignKey,
     Enum as SQLEnum
 )
-from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+# DB
 from app.db.connection import Base
 from app.db.column_types import bigint_pk, language, created_at
-from app.schemas.enums import UserRoleEnum
+
+# Enums
+from app.schemas import UserRoleEnum
 
 
 class User(Base):

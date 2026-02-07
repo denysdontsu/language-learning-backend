@@ -1,10 +1,18 @@
+# Third-party
 from fastapi import APIRouter
 
+# Dependencies
 from app.api.dependencies import db_dependency
-from app.schemas.enums import LanguageEnum
-from app.schemas.user_level_language import UserLanguageLevelUpdate, UserLanguageBrief
-from app.services.admin.language import update_language_by_admin_service
 
+# Schemas
+from app.schemas import (
+    LanguageEnum,
+    UserLanguageBrief,
+    UserLanguageLevelUpdate
+)
+
+# Services
+from app.services.admin.language import update_language_by_admin_service
 
 router = APIRouter(
     prefix='/users/{user_id}/languages',

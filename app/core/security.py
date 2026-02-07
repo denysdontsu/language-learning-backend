@@ -1,13 +1,17 @@
+# Standard library
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
+# Third-party: crypto & auth
 from argon2 import PasswordHasher
 from argon2.exceptions import InvalidHashError, VerifyMismatchError
 from jose import ExpiredSignatureError, JWTError, jwt
 
+# Third-party: FastAPI
 from fastapi import HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 
+# App
 from app.core.config import settings
 from app.schemas.jwt_token import JWTPayload
 

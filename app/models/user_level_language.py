@@ -1,6 +1,8 @@
+# Third-party
 from sqlalchemy import UniqueConstraint
 from sqlalchemy.orm import Mapped, relationship
 
+# DB
 from app.db.connection import Base
 from app.db.column_types import bigint_pk, user_fk, language, level, created_at
 

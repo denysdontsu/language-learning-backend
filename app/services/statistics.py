@@ -1,13 +1,29 @@
+# Standard library
 from datetime import datetime, timedelta, timezone
 from typing import Literal, NamedTuple
 
+# Third-party
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.crud.user_exercise_history import get_exercise_history_by_user
+# Models
 from app.models import UserExerciseHistory
-from app.schemas.enums import LanguageLevelEnum, ExerciseStatusEnum, LanguageEnum
-from app.schemas.statistics import OverviewResponse, PerformanceResponse, DifficultyStats, TopicStats
+
+# Utils
 from app.utils.helpers import parse_date_range
+
+# CRUD
+from app.crud.user_exercise_history import get_exercise_history_by_user
+
+# Schemas
+from app.schemas import (
+    LanguageLevelEnum,
+    ExerciseStatusEnum,
+    LanguageEnum,
+    OverviewResponse,
+    PerformanceResponse,
+    DifficultyStats,
+    TopicStats
+)
 
 
 class AccuracyStats(NamedTuple):

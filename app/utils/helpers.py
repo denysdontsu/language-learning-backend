@@ -1,10 +1,12 @@
+# Standard library
 from datetime import date, datetime, timezone, timedelta, time
 from typing import Literal
 
+# Third-party
 from fastapi import HTTPException, status
 
-from app.schemas.enums import ExerciseTypeEnum
-from app.schemas.common import Options
+# Schemas
+from app.schemas import ExerciseTypeEnum, Options
 
 
 def get_correct_option_key(

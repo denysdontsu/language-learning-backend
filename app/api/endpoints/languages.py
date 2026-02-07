@@ -1,17 +1,26 @@
+# Third-party
 from fastapi import APIRouter, status
 
-from app.api.dependencies import (
-    db_dependency,
-    current_active_user_dependency)
+# Dependencies
+from app.api.dependencies import db_dependency, current_active_user_dependency
+
+# CRUD
 from app.crud.user_language import get_all_user_languages
-from app.schemas.enums import LanguageEnum
-from app.schemas.user_level_language import UserLanguageLevelUpdate, UserLanguageBrief
+
+# Schemas
+from app.schemas import (
+    LanguageEnum,
+    UserLanguageLevelUpdate,
+    UserLanguageBrief
+)
+
+# Services
 from app.services.user_language import (
     update_or_create_user_language,
-    delete_user_learning_language)
+    delete_user_learning_language
+)
 
 router = APIRouter()
-
 
 @router.get('/',
             response_model=list[UserLanguageBrief],

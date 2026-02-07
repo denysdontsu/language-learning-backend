@@ -1,8 +1,11 @@
+# Standard library
 from typing import Literal
 
+# Third-party
 from pydantic import BaseModel, ConfigDict, field_validator, Field
 
-from app.schemas.enums import LanguageLevelEnum
+# Schemas
+from app.schemas import LanguageLevelEnum
 
 
 class OverviewResponse(BaseModel):

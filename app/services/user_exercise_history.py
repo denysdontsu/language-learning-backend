@@ -1,8 +1,12 @@
+# Third-party
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+# CRUD
 from app.crud.user_exercise_history import get_history_with_exercise_by_id
-from app.schemas.user_exercise_history import ExerciseHistoryRead
+
+# Schemas
+from app.schemas import ExerciseHistoryRead
 
 
 async def get_exercise_history_by_id_service(

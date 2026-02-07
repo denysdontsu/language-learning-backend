@@ -1,6 +1,8 @@
-from app.utils.enum_utils import validate_enum_dict_properties
-
+# Third-party
 from enum import Enum
+
+# Utils
+from app.utils.enum_utils import validate_enum_dict_properties
 
 # Enums for models and schemas
 class ExerciseTypeEnum(str, Enum):

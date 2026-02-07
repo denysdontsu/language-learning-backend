@@ -1,17 +1,25 @@
+# Third-party
 from fastapi import APIRouter, status, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 
+# Dependencies
 from app.api.dependencies import db_dependency
-from app.schemas.user import (
+
+# Schemas
+from app.schemas import (
     UserCreate,
     UserCreateWithLanguage,
     UserBrief,
     UserBriefWithLang,
-    UserLogin)
+    UserLogin
+)
+
+# Services
 from app.services.auth import (
     register_user_simple,
     register_user_with_language,
-    authenticate_user)
+    authenticate_user
+)
 
 router = APIRouter()
 

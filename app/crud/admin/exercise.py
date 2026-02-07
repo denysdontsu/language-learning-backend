@@ -1,8 +1,11 @@
+# Third-party
 from sqlalchemy.ext.asyncio import AsyncSession
 
+# Models
 from app.models import Exercise
-from app.schemas.exercise import ExerciseCreate
 
+# Schemas
+from app.schemas import ExerciseCreate
 
 async def create_exercise(
         db: AsyncSession,

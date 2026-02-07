@@ -1,9 +1,11 @@
+# Standard library
 import re
 
+# Third-party
 from pydantic_core.core_schema import ValidationInfo
 
-from app.schemas.enums import ExerciseTypeEnum, ExerciseStatusEnum
-from app.schemas.common import Options
+# Schemas
+from app.schemas import ExerciseTypeEnum, ExerciseStatusEnum, Options
 
 # Reserved values that cannot be used in string fields
 RESERVED_VALUES = {'none', 'null', 'true', 'false', 'admin'}

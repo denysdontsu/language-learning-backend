@@ -1,13 +1,21 @@
+# Standard library
 from typing import Union
 
+# Third-party
 from fastapi import APIRouter, status, Request
 
+# Dependencies
 from app.api.dependencies import db_dependency, current_active_user_dependency, limiter
+
+# Schemas
 from app.schemas.user import (
     UserBriefWithLang,
     UserBrief,
     UserUpdate,
-    UserChangePassword)
+    UserChangePassword
+)
+
+# Services
 from app.services.user import (
     get_user_profile,
     update_user_profile,

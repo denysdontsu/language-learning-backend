@@ -1,15 +1,28 @@
+# Third-party
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+# Core
 from app.core.security import hash_password, create_access_token, verify_password
+
+# CRUD
 from app.crud.user import (
     get_user_by_email,
     create_user_with_language,
     create_user,
-    get_user_by_username)
+    get_user_by_username
+)
+
+# Models
 from app.models.user import User
-from app.schemas.user import UserCreate, UserCreateWithLanguage, UserBriefWithLang
-from app.schemas.user_level_language import UserLanguageBase
+
+# Schemas
+from app.schemas import (
+    UserCreate,
+    UserCreateWithLanguage,
+    UserBriefWithLang,
+    UserLanguageBase
+)
 
 
 async def register_user_simple(

@@ -1,9 +1,13 @@
+# # Third-party
 from sqlalchemy import BigInteger, Integer, Index, ForeignKey, CheckConstraint, Text, Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+# DB
 from app.db.connection import Base
 from app.db.column_types import bigint_pk, user_fk, created_at
-from app.schemas.enums import ExerciseStatusEnum
+
+# Enums
+from app.schemas import ExerciseStatusEnum
 
 
 class UserExerciseHistory(Base):

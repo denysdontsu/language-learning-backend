@@ -1,6 +1,8 @@
+# Standard library
 from datetime import datetime
 from typing import Self
 
+# Third-party
 from pydantic import (
     BaseModel,
     Field,
@@ -10,14 +12,23 @@ from pydantic import (
     computed_field,
     )
 
-from app.schemas.enums import ExerciseTypeEnum, LanguageLevelEnum, LanguageEnum, ExerciseStatusEnum
-from app.schemas.common import Options
+# Schemas
+from app.schemas import (
+    ExerciseTypeEnum,
+    LanguageLevelEnum,
+    LanguageEnum,
+    ExerciseStatusEnum,
+    Options
+)
+
+# Utils
 from app.utils.helpers import get_correct_option_key
 from app.utils.normalizers import normalize_topic
 from app.utils.validators import (
     validate_question_translation_pair,
     validate_exercise_options,
-    validate_translation_usage)
+    validate_translation_usage
+)
 
 
 class ExerciseBase(BaseModel):

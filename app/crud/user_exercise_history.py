@@ -1,13 +1,22 @@
+# # Standard library
 from typing import Literal
 from datetime import datetime
 
+# Third-party
 from sqlalchemy import select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import contains_eager
 
+# Models
 from app.models import UserExerciseHistory, Exercise
-from app.schemas.enums import LanguageEnum, LanguageLevelEnum, ExerciseStatusEnum
-from app.schemas.user_exercise_history import ExerciseHistoryCreate
+
+# Schemas
+from app.schemas import (
+    LanguageEnum,
+    LanguageLevelEnum,
+    ExerciseStatusEnum,
+    ExerciseHistoryCreate
+)
 
 
 async def create_user_history(

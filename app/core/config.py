@@ -1,5 +1,7 @@
+# Standard library
 from typing import Literal
 
+# Third-party
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field, field_validator
 from functools import lru_cache

@@ -1,9 +1,14 @@
+# Third-party
 from fastapi import APIRouter, status
 
+# Dependencies
 from app.api.dependencies import db_dependency
-from app.crud.admin.exercise import create_exercise
-from app.schemas.exercise import ExerciseRead, ExerciseCreate
 
+# CRUD
+from app.crud.admin.exercise import create_exercise
+
+# Schemas
+from app.schemas import ExerciseRead, ExerciseCreate
 
 router = APIRouter(
     prefix='/exercises',

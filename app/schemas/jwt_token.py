@@ -1,5 +1,7 @@
+# Standard library
 from typing import Literal
 
+# Third-party
 from pydantic import BaseModel, Field, field_validator
 
 

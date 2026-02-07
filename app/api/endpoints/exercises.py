@@ -1,9 +1,21 @@
+# Third-party
 from fastapi import APIRouter, status
 
+# Dependencies
 from app.api.dependencies import user_active_language_dependency, db_dependency
+
+# CRUD
 from app.crud.exercise import get_all_topics
-from app.schemas.enums import LanguageLevelEnum
-from app.schemas.exercise import ExerciseQuestion, ExerciseCorrectAnswer, ExerciseUserAnswer
+
+# Schemas
+from app.schemas import (
+    LanguageLevelEnum,
+    ExerciseQuestion,
+    ExerciseCorrectAnswer,
+    ExerciseUserAnswer
+)
+
+# Services
 from app.services.exercise import get_exercise_service, check_and_save_submission
 
 router = APIRouter()

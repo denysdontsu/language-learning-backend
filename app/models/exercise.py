@@ -1,10 +1,14 @@
+# Third-party
 from sqlalchemy import String, Text, Boolean, Index, text, Enum as SQLEnum, CheckConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import JSONB
 
+# DB
 from app.db.connection import Base
 from app.db.column_types import bigint_pk, language, level, created_at
-from app.schemas.enums import LanguageEnum, ExerciseTypeEnum
+
+# Enums
+from app.schemas import LanguageEnum, ExerciseTypeEnum
 
 
 class Exercise(Base):

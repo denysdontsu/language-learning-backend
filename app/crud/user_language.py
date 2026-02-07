@@ -1,9 +1,12 @@
+# Third-party
 from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.user_level_language import UserLevelLanguage
-from app.schemas.enums import LanguageEnum, LanguageLevelEnum
+# Models
+from app.models import UserLevelLanguage
 
+# Schemas
+from app.schemas import LanguageEnum, LanguageLevelEnum
 
 async def get_language_by_id(
         db: AsyncSession,

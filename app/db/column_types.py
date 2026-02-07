@@ -16,13 +16,16 @@ Usage:
         created_at: Mapped[created_at]
 """
 
+# Standard library
 from datetime import datetime
 from typing import Annotated
 
+# Third-party
 from sqlalchemy import BigInteger, DateTime,ForeignKey, text, Enum as SQLEnum
 from sqlalchemy.orm import mapped_column
 
-from app.schemas.enums import LanguageEnum, LanguageLevelEnum
+# Schemas
+from app.schemas import LanguageEnum, LanguageLevelEnum
 
 # Primary Keys
 bigint_pk = Annotated[

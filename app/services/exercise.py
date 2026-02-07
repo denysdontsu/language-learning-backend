@@ -1,13 +1,26 @@
+# Third-party
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+# Models
+from app.models import User
+
+# Utils
+from app.utils.normalizers import normalize_topic, normalize_answer
+
+# CRUD
 from app.crud.exercise import get_exercise, get_exercise_by_id
 from app.crud.user_exercise_history import create_user_history
-from app.models import User
-from app.schemas.enums import LanguageLevelEnum, ExerciseStatusEnum
-from app.schemas.exercise import ExerciseQuestion, ExerciseUserAnswer, ExerciseCorrectAnswer
-from app.schemas.user_exercise_history import ExerciseHistoryCreate
-from app.utils.normalizers import normalize_topic, normalize_answer
+
+# Schemas
+from app.schemas import (
+    LanguageLevelEnum,
+    ExerciseStatusEnum,
+    ExerciseQuestion,
+    ExerciseUserAnswer,
+    ExerciseCorrectAnswer,
+    ExerciseHistoryCreate
+)
 
 
 async def get_exercise_service(

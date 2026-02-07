@@ -1,14 +1,19 @@
+# Standard library
 from typing import Literal
 
+# Third-party
 from fastapi import APIRouter, Query
 
+# Dependencies
 from app.api.dependencies import db_dependency, current_active_user_dependency
-from app.schemas.enums import LanguageEnum
-from app.schemas.statistics import OverviewResponse, PerformanceResponse
+
+# Schemas
+from app.schemas import LanguageEnum, OverviewResponse, PerformanceResponse
+
+# Services
 from app.services.statistics import get_basic_statistics, get_performance_statistics
 
 router = APIRouter()
-
 
 @router.get('/',
             response_model=OverviewResponse,

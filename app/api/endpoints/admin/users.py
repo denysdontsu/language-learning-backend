@@ -1,19 +1,35 @@
+# Standard library
 from datetime import date
 
+# Third-party
 from fastapi import APIRouter, Query, HTTPException, status
 
-from app.api.dependencies import db_dependency, current_admin_dependency, pagination_dependency
+# Dependencies
+from app.api.dependencies import (
+    db_dependency,
+    current_admin_dependency,
+    pagination_dependency
+)
+
+# CRUD
 from app.crud.user import get_user_with_active_language
-from app.schemas.enums import LanguageEnum, UserRoleEnum, LanguageLevelEnum
-from app.schemas.user import UserRead, UserUpdateByAdmin
+
+# Services
 from app.services.admin.user import get_users_by_admin, update_user_by_admin_service
 
+# Schemas
+from app.schemas import (
+    LanguageEnum,
+    UserRoleEnum,
+    LanguageLevelEnum,
+    UserRead,
+    UserUpdateByAdmin
+)
 
 router = APIRouter(
     prefix='/users',
     tags=['Admin / Users']
 )
-
 
 @router.get('/',
             response_model=list[UserRead],

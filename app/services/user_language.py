@@ -1,15 +1,25 @@
+# Third-party
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+# Models
+from app.models import UserLevelLanguage, User
+
+# CRUD
 from app.crud.user import get_user_by_id, update_active_language
 from app.crud.user_language import (
     get_all_user_languages,
     create_user_language,
     update_user_language,
-    delete_learning_language)
-from app.models import UserLevelLanguage, User
-from app.schemas.enums import LanguageEnum, LanguageLevelEnum
-from app.schemas.user_level_language import UserLanguageLevelUpdate
+    delete_learning_language
+)
+
+# Schemas
+from app.schemas import (
+    LanguageEnum,
+    LanguageLevelEnum,
+    UserLanguageLevelUpdate
+)
 
 
 async def update_or_create_user_language(

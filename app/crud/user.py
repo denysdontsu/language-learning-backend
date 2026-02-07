@@ -1,12 +1,16 @@
+# Standard library
 from typing import Any
 
+# Third-party
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
-from app.models import UserLevelLanguage
-from app.models.user import User
-from app.schemas.user import UserCreate, UserCreateWithLanguage
+# Models
+from app.models import UserLevelLanguage, User
+
+# Schemas
+from app.schemas import UserCreate, UserCreateWithLanguage
 
 
 async def get_user_by_id(
