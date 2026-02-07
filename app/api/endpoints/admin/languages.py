@@ -4,11 +4,15 @@ from fastapi import APIRouter
 # Dependencies
 from app.api.dependencies import db_dependency
 
+# CRUD
+from app.crud.user_language import get_all_user_languages
+
 # Schemas
 from app.schemas import (
     LanguageEnum,
     UserLanguageBrief,
-    UserLanguageLevelUpdate
+    UserLanguageLevelUpdate,
+    UserLanguageRead
 )
 
 # Services
@@ -18,6 +22,28 @@ router = APIRouter(
     prefix='/users/{user_id}/languages',
     tags=['Admin / Languages']
 )
+
+@router.get('/',
+            response_model=list[UserLanguageRead],
+            summary="Get user's learning languages for admin")
+async def get_learning_languages_by_admin(
+        db: db_dependency,
+        user_id: int
+) -> list[UserLanguageRead]:
+    """
+    Get all languages user is currently learning. Admin only.
+
+    Returns empty list if user has no learning languages yet.
+
+    Returns:
+        list[UserLanguageRead]: List of languages with proficiency levels, description and metadata
+        (may be empty)
+    """
+    languages_orm = await get_all_user_languages(db, user_id)
+
+    # Serialize ORM list to Pydantic list
+    return [UserLanguageRead.model_validate(lang) for lang in languages_orm]
+
 
 @router.post('/{language}',
               response_model=UserLanguageBrief,

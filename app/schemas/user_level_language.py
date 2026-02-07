@@ -73,7 +73,6 @@ class UserLanguageBrief(UserLanguageBase):
 
 class UserLanguageRead(UserLanguageBrief):
     """Schema for user language level response (admin only)."""
-    user: 'UserBrief'
     created_at: datetime
 
     model_config = ConfigDict(
@@ -81,13 +80,6 @@ class UserLanguageRead(UserLanguageBrief):
         json_schema_extra={
             'example': {
                 'id': 1,
-                'user': {
-                    'id': 1,
-                    'email': 'example@mail.com',
-                    'name': 'Denis',
-                    'username': 'denisD',
-                    'native_language': 'uk'
-                    },
                 'language': 'en',
                 'level': 'B2',
                 'level_description': 'Upper Intermediate',
