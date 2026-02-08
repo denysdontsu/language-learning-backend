@@ -5,13 +5,12 @@ from datetime import datetime
 from pydantic import BaseModel, EmailStr, Field, ConfigDict, field_validator
 
 # Schemas
-from app.schemas import (
+from .enums import (
     LanguageEnum,
     LanguageLevelEnum,
     UserRoleEnum,
-    UserLanguageBrief,
-    UserLanguageBase
 )
+from .user_level_language import UserLanguageBrief, UserLanguageBase
 
 # Utils
 from app.utils.validators import validate_password_strength, validate_string_field

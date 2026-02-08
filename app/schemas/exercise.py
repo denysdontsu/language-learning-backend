@@ -13,13 +13,13 @@ from pydantic import (
     )
 
 # Schemas
-from app.schemas import (
+from .enums import (
     ExerciseTypeEnum,
     LanguageLevelEnum,
     LanguageEnum,
-    ExerciseStatusEnum,
-    Options
+    ExerciseStatusEnum
 )
+from .common import Options
 
 # Utils
 from app.utils.helpers import get_correct_option_key

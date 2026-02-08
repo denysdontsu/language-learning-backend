@@ -1,16 +1,11 @@
 # Standard library
 from datetime import datetime
-from typing import TYPE_CHECKING
 
 # Third-party
 from pydantic import BaseModel, ConfigDict, Field, computed_field
 
 # Schemas
-from app.schemas import LanguageLevelEnum, LanguageEnum
-
-if TYPE_CHECKING:
-    from app.schemas.user import UserBrief
-
+from .enums import LanguageLevelEnum, LanguageEnum
 
 class UserLanguageBase(BaseModel):
     """Base fields for user language level."""

@@ -6,11 +6,8 @@ from typing import Self
 from pydantic import BaseModel, Field, ConfigDict, model_validator, computed_field
 
 # Schemas
-from app.schemas import (
-    ExerciseStatusEnum,
-    ExerciseBrief,
-    ExerciseBriefForHistory
-)
+from .enums import ExerciseStatusEnum
+from .exercise import ExerciseBrief, ExerciseBriefForHistory
 
 # Utils
 from app.utils.validators import validate_exercise_status

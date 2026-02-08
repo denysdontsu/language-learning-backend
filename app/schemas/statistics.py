@@ -5,7 +5,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, field_validator, Field
 
 # Schemas
-from app.schemas import LanguageLevelEnum
+from .enums import LanguageLevelEnum
 
 
 class OverviewResponse(BaseModel):
