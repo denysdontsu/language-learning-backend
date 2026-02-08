@@ -10,7 +10,6 @@ from app.crud.user_language import get_all_user_languages
 # Schemas
 from app.schemas import (
     LanguageEnum,
-    UserLanguageBrief,
     UserLanguageLevelUpdate,
     UserLanguageRead
 )
@@ -46,14 +45,14 @@ async def get_learning_languages_by_admin(
 
 
 @router.post('/{language}',
-              response_model=UserLanguageBrief,
+              response_model=UserLanguageRead,
               summary='Add or update user learning language')
 async def update_or_create_user_language_endpoint(
         db: db_dependency,
         user_id: int,
         language: LanguageEnum,
         data: UserLanguageLevelUpdate
-) -> UserLanguageBrief:
+) -> UserLanguageRead:
     """
     Add new language to learning list or update existing one.
 
@@ -81,7 +80,7 @@ async def update_or_create_user_language_endpoint(
         - make_active: Set as active language (default: false)
 
     Returns:
-        UserLanguageBrief: Created or updated language entry (201 Created)
+        UserLanguageRead: Created or updated language entry (201 Created)
 
     Raises:
         404: User not found
@@ -93,4 +92,4 @@ async def update_or_create_user_language_endpoint(
         language,
         data
     )
-    return UserLanguageBrief.model_validate(updated_user_language)
+    return UserLanguageRead.model_validate(updated_user_language)
