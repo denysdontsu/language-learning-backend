@@ -2,7 +2,7 @@
 from datetime import date
 
 # Third-party
-from fastapi import APIRouter, Query, HTTPException, status
+from fastapi import APIRouter, Query
 
 # Dependencies
 from app.api.dependencies import (
@@ -10,9 +10,6 @@ from app.api.dependencies import (
     current_admin_dependency,
     pagination_dependency
 )
-
-# CRUD
-from app.crud.user import get_user_with_active_language
 
 # Services
 from app.services.admin.user import get_users_by_admin, update_user_by_admin_service
@@ -25,6 +22,9 @@ from app.schemas import (
     UserRead,
     UserUpdateByAdmin
 )
+
+# Utils
+from app.utils.db_helpers import get_user_or_404
 
 router = APIRouter(
     prefix='/users',
@@ -123,12 +123,7 @@ async def get_user_endpoint(
         404: User not found
         403: Non-admin user attempting access
     """
-    user = await get_user_with_active_language(db, user_id)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f'User id:{user_id} not found'
-        )
+    user = await get_user_or_404(db, user_id, True)
 
     return UserRead.model_validate(user)
 

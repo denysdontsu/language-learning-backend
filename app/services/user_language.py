@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models import UserLevelLanguage, User
 
 # CRUD
-from app.crud.user import get_user_by_id, update_active_language
+from app.crud.user import update_active_language
 from app.crud.user_language import (
     get_all_user_languages,
     create_user_language,
@@ -20,6 +20,9 @@ from app.schemas import (
     LanguageLevelEnum,
     UserLanguageLevelUpdate
 )
+
+# Utils
+from app.utils.db_helpers import get_user_or_404
 
 
 async def update_or_create_user_language(
@@ -84,7 +87,7 @@ async def update_or_create_user_language(
     # Set as active if:
         # Explicitly requested (make_active=True)
         # User has no active language (first language)
-    user = await get_user_by_id(db, user_id)
+    user = await get_user_or_404(db, user_id, False)
     if data.make_active or user.active_learning_language_id is None:
         await update_active_language(db, user, result.id)
 

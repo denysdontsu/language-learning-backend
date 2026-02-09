@@ -4,12 +4,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 # Models
 from app.models import User
+from app.utils.db_helpers import get_exercise_or_404
 
 # Utils
 from app.utils.normalizers import normalize_topic, normalize_answer
 
 # CRUD
-from app.crud.exercise import get_exercise, get_exercise_by_id
+from app.crud.exercise import get_exercise
 from app.crud.user_exercise_history import create_user_history
 
 # Schemas
@@ -109,12 +110,7 @@ async def check_and_save_submission(
         HTTPException 404: If exercise not found
     """
     # Get exercise
-    exercise = await get_exercise_by_id(db, exercise_id)
-    if not exercise:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f'Exercise with id {exercise_id} not found'
-        )
+    exercise = await get_exercise_or_404(db, exercise_id)
 
     user_answer_normalized = normalize_answer(data.user_answer)
     correct_answer_normalized = normalize_answer(exercise.correct_answer)

@@ -15,7 +15,10 @@ from app.schemas import (
 )
 
 # Services
-from app.services.admin.language import update_language_by_admin_service
+from app.services.user_language import update_or_create_user_language
+
+# Utils
+from app.utils.db_helpers import get_user_or_404
 
 router = APIRouter(
     prefix='/users/{user_id}/languages',
@@ -86,7 +89,8 @@ async def update_or_create_user_language_endpoint(
         404: User not found
         400: Invalid language or level
     """
-    updated_user_language = await update_language_by_admin_service(
+    await get_user_or_404(db, user_id, False)
+    updated_user_language = await update_or_create_user_language(
         db,
         user_id,
         language,

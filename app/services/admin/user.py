@@ -1,14 +1,30 @@
+# Standard library
 from datetime import date, datetime, time, timezone
 
+# Third-party
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+# CRUD
 from app.crud.admin.user import get_users
-from app.crud.user import get_user_with_active_language
+
+# Models
 from app.models import User
-from app.schemas.enums import LanguageEnum, UserRoleEnum, LanguageLevelEnum
-from app.schemas.user import UserRead, UserUpdateByAdmin
+
+# Schemas
+from app.schemas import (
+    LanguageEnum,
+    UserRoleEnum,
+    LanguageLevelEnum,
+    UserRead,
+    UserUpdateByAdmin
+)
+
+# Services
 from app.services.user import update_user_profile
+
+# Utils
+from app.utils.db_helpers import get_user_or_404
 
 
 async def get_users_by_admin(
@@ -108,12 +124,7 @@ async def update_user_by_admin_service(
             )
 
     # Get user with active language
-    current_user = await get_user_with_active_language(db, user_id)
-    if not current_user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"User {user_id} don't exist"
-        )
+    current_user = await get_user_or_404(db, user_id, True)
 
     # Delegate to shared update logic
     updated_user = await update_user_profile(db, current_user, data)

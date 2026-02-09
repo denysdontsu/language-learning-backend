@@ -11,7 +11,6 @@ from app.models import User
 
 # CRUD
 from app.crud.user import (
-    get_user_with_active_language,
     get_user_by_email,
     get_user_by_username,
     update_user
@@ -19,6 +18,9 @@ from app.crud.user import (
 
 # Schemas
 from app.schemas import UserUpdate, UserChangePassword, UserUpdateByAdmin
+
+# Utils
+from app.utils.db_helpers import get_user_or_404
 
 
 async def get_user_profile(
@@ -43,13 +45,7 @@ async def get_user_profile(
         HTTPException: 404 if user not found (defensive check)
     """
     # Load user with active language relationship
-    user_with_lang = await get_user_with_active_language(db, user.id)
-
-    if user_with_lang is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail='User not found'
-        )
+    user_with_lang = await get_user_or_404(db, user.id, True)
     return user_with_lang
 
 
