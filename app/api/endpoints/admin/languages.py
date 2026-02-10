@@ -1,5 +1,5 @@
 # Third-party
-from fastapi import APIRouter
+from fastapi import APIRouter, status
 
 # Dependencies
 from app.api.dependencies import db_dependency
@@ -15,7 +15,7 @@ from app.schemas import (
 )
 
 # Services
-from app.services.user_language import update_or_create_user_language
+from app.services.user_language import update_or_create_user_language, delete_user_learning_language
 
 # Utils
 from app.utils.db_helpers import get_user_or_404
@@ -97,3 +97,39 @@ async def update_or_create_user_language_endpoint(
         data
     )
     return UserLanguageRead.model_validate(updated_user_language)
+
+
+@router.delete(
+    '/{language}',
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary='Remove language from learning list')
+async def delete_user_language(
+        db: db_dependency,
+        user_id: int,
+        language: LanguageEnum
+) -> None:
+    """
+    Remove language from user's learning list.
+
+    Cannot remove:
+    - Last language in learning list
+    - Currently active learning language
+
+    To remove active language, first set another language as active,
+    then remove the desired language.
+
+    Path parameters:
+        language: Language code to remove (ISO 639-1)
+
+    Returns:
+        204 No Content on success
+
+    Raises:
+        HTTPException: 404 if language not in learning list
+        HTTPException: 400 if trying to remove last language
+        HTTPException: 400 if trying to remove active language
+    """
+    current_user = await get_user_or_404(db, user_id, False)
+
+    await delete_user_learning_language(db, current_user, language) # использует существующую функцию
+    return None
