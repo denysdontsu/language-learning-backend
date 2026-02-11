@@ -1,11 +1,21 @@
+# Standard library
+from datetime import date
+from typing import Literal
+
 # Third-party
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 # Models
 from app.models import Exercise
 
 # Schemas
-from app.schemas import ExerciseCreate
+from app.schemas import (
+    ExerciseTypeEnum,
+    LanguageLevelEnum,
+    LanguageEnum,
+    ExerciseCreate
+)
 
 async def create_exercise(
         db: AsyncSession,
@@ -46,3 +56,90 @@ async def create_exercise(
     await db.refresh(new_exercise)
 
     return new_exercise
+
+
+async def get_exercises(
+        db: AsyncSession,
+        search: str | None,
+        topic: str | None,
+        difficult_level: LanguageLevelEnum | None,
+        exercise_type: ExerciseTypeEnum | None,
+        question_language: LanguageEnum | None,
+        answer_language: LanguageEnum | None,
+        date_from: date | None,
+        date_to: date | None,
+        is_active: bool | None = True,
+        order: Literal['asc', 'desc'] = 'desc',
+        limit: int = 50,
+        offset: int = 0,
+) -> list[Exercise]:
+    """
+    Retrieve exercises with filtering, sorting, and pagination.
+
+    Supports comprehensive filtering by content, metadata, languages,
+    activity status, and creation date range.
+
+    Args:
+        db: Database session
+        search: Search text in question and answer (case-insensitive partial match)
+        topic: Filter by topic (exact match on normalized topic)
+        difficult_level: Filter by CEFR level (A1-C2)
+        exercise_type: Filter by type (fill_blank, multiple_choice, etc.)
+        question_language: Filter by question language
+        answer_language: Filter by answer language
+        date_from: Show exercises created on or after this datetime (inclusive)
+        date_to: Show exercises created on or before this datetime (inclusive)
+        is_active: Filter by active status (None = all, True = active only, False = inactive only)
+        order: Sort order by added_at ('asc' or 'desc')
+        limit: Maximum number of records to return
+        offset: Number of records to skip (for pagination)
+
+    Returns:
+        list[Exercise]: List of exercises matching criteria (may be empty)
+    """
+    stmt = select(Exercise)
+
+    # Search filter
+    if search:
+        stmt = stmt.where(
+            or_(
+                Exercise.question_text.ilike(f'%{search}%'),
+                Exercise.correct_answer.ilike(f'%{search}%')
+            )
+        )
+
+    # Exercise metadata filters
+    if topic:
+        stmt = stmt.where(Exercise.topic == topic)
+    if difficult_level:
+        stmt = stmt.where(Exercise.difficult_level == difficult_level)
+    if exercise_type:
+        stmt = stmt.where(Exercise.type == exercise_type)
+
+    # Language filters
+    if question_language:
+        stmt = stmt.where(Exercise.question_language == question_language)
+    if answer_language:
+        stmt = stmt.where(Exercise.answer_language == answer_language)
+
+    # Active status filter
+    if is_active is not None:
+        stmt = stmt.where(Exercise.is_active == is_active)
+
+    # Date range filters
+    if date_from:
+        stmt = stmt.where(Exercise.added_at >= date_from)
+    if date_to:
+        stmt = stmt.where(Exercise.added_at <= date_to)
+
+    # Sorting
+    if order == 'asc':
+        stmt = stmt.order_by(Exercise.added_at.asc())
+    else:
+        stmt = stmt.order_by(Exercise.added_at.desc())
+
+    # Pagination
+    stmt = stmt.offset(offset).limit(limit)
+
+    result = await db.execute(stmt)
+    return list(result.scalars().all())
