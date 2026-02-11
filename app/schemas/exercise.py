@@ -372,23 +372,6 @@ class ExerciseCorrectAnswer(ExerciseBase):
     )
 
 
-class ExerciseFilter(BaseModel):
-    """Schema for filtering exercises based on optional criteria."""
-    topic: str | None = Field(None, min_length=1, max_length=100)
-    difficult_level: LanguageLevelEnum | None = None
-    type: ExerciseTypeEnum | None = None
-
-    model_config = ConfigDict(
-        json_schema_extra={
-            'example': {
-                'topic': None,
-                'difficult_level': 'B1',
-                'type': None,
-            }
-        }
-    )
-
-
 class ExerciseBriefForHistory(ExerciseBase):
     """Brief exercise info for history list."""
     id: int
