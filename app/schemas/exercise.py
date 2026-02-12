@@ -537,11 +537,31 @@ class ExerciseBrief(ExerciseBase):
     )
 
 
+class ExerciseStats(BaseModel):
+    """Exercise usage statistics."""
+    # Usage metrics
+    total_attempts: int = Field(description='Total times exercise was attempted')
+    unique_users: int = Field(description='Number of unique users who attempted')
+
+    # Performance metrics
+    correct_count: int = Field(description='Number of correct answers')
+    incorrect_count: int = Field(description='Number of incorrect answers')
+    skipped_count: int = Field(description='Number of times skipped')
+    accuracy_rate: float = Field(description='Percentage of correct answers (0-100)')
+
+    # Difficulty assessment
+    avg_time_seconds: float | None = Field(None, description='Average completion time in seconds')
+
+    # Freshness
+    last_used_at: datetime | None = Field(None, description='When last attempted by any user')
+
+
 class ExerciseRead(ExerciseBrief):
-    """Schema for exercise response (for admin)."""
+    """Detailed exercise schema with all fields and statistics (for admin)."""
     # Metadata
     added_at: datetime
     is_active: bool
+    stats: ExerciseStats | None = Field(None, description='Usage statistics')
 
 
     model_config = ConfigDict(
@@ -573,7 +593,18 @@ class ExerciseRead(ExerciseBrief):
                     'added_at': '2024-12-20T12:30:00Z',
                     'is_active': True,
                     # Explanation (optional, Phase 2)
-                    'explanation': None
+                    'explanation': None,
+                    # stats
+                    'stats': {
+                        'total_attempts': 248,
+                        'unique_users': 87,
+                        'correct_count': 156,
+                        'incorrect_count': 72,
+                        'skipped_count': 20,
+                        'accuracy_rate': 68.4,
+                        'avg_time_seconds': 12.5,
+                        'last_used_at': '2024-12-20T15:45:00Z'
+                    }
 
                 },
                 # Example 2: Multiple choice
@@ -606,7 +637,18 @@ class ExerciseRead(ExerciseBrief):
                     'added_at': '2024-12-20T12:30:00Z',
                     'is_active': True,
                     # Explanation (optional, Phase 2)
-                    'explanation': None
+                    'explanation': None,
+                    # stats
+                    'stats': {
+                        'total_attempts': 248,
+                        'unique_users': 87,
+                        'correct_count': 156,
+                        'incorrect_count': 72,
+                        'skipped_count': 20,
+                        'accuracy_rate': 68.4,
+                        'avg_time_seconds': 12.5,
+                        'last_used_at': '2024-12-20T15:45:00Z'
+                    }
                 },
                 # Example 3: Fill blank
                 {
@@ -633,7 +675,18 @@ class ExerciseRead(ExerciseBrief):
                     'added_at': '2024-12-20T12:30:00Z',
                     'is_active': True,
                     # Explanation (optional, Phase 2)
-                    'explanation': None
+                    'explanation': None,
+                    # stats
+                    'stats': {
+                        'total_attempts': 248,
+                        'unique_users': 87,
+                        'correct_count': 156,
+                        'incorrect_count': 72,
+                        'skipped_count': 20,
+                        'accuracy_rate': 68.4,
+                        'avg_time_seconds': 12.5,
+                        'last_used_at': '2024-12-20T15:45:00Z'
+                    }
                 }
             ]
         }

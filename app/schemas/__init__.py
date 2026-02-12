@@ -16,7 +16,8 @@ from .user_level_language import (
 from .exercise import (
     ExerciseUserAnswer, ExerciseUpdate, ExerciseQuestion,
     ExerciseRead, ExerciseCreate, ExerciseCorrectAnswer,
-    ExerciseBase, ExerciseBriefForHistory, ExerciseBrief
+    ExerciseBase, ExerciseBriefForHistory, ExerciseStats,
+    ExerciseBrief
 )
 from .user_exercise_history import (
     ExerciseHistoryUpdate, ExerciseHistoryRead,
@@ -45,7 +46,8 @@ __all__ = [
     # Exercise
     'ExerciseUserAnswer', 'ExerciseUpdate', 'ExerciseQuestion',
     'ExerciseRead', 'ExerciseCreate', 'ExerciseCorrectAnswer',
-    'ExerciseBase', 'ExerciseBriefForHistory', 'ExerciseBrief',
+    'ExerciseBase', 'ExerciseBriefForHistory', 'ExerciseStats',
+    'ExerciseBrief',
 
     # History
     'ExerciseHistoryUpdate', 'ExerciseHistoryRead',
