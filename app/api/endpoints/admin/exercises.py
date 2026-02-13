@@ -9,7 +9,7 @@ from fastapi import APIRouter, status, Query
 from app.api.dependencies import db_dependency, pagination_dependency
 
 # CRUD
-from app.crud.admin.exercise import create_exercise, get_exercises
+from app.crud.admin.exercise import create_exercise, get_exercises, get_exercise_stats
 
 # Schemas
 from app.schemas import (
@@ -20,6 +20,7 @@ from app.schemas import (
     LanguageLevelEnum,
     ExerciseTypeEnum
 )
+from app.utils.db_helpers import get_exercise_or_404
 
 # Utils
 from app.utils.helpers import parse_date_range
@@ -169,3 +170,56 @@ async def get_exercises_endpoint(
     )
 
     return [ExerciseBriefForHistory.model_validate(exercise) for exercise in exercises]
+
+
+@router.get('/{exercise_id}',
+            response_model=ExerciseRead,
+            summary='Get detailed exercise schemas with all fields and statistics')
+async def get_exercise_with_stats_endpoint(
+        db: db_dependency,
+        exercise_id: int
+) -> ExerciseRead:
+    """
+    Get detailed exercise information with usage statistics.
+
+    Admin only. Returns complete exercise data including all fields
+    and aggregated usage statistics from user attempts.
+
+    Statistics include:
+    - Total attempts and unique users
+    - Correct/incorrect/skipped counts
+    - Accuracy rate (percentage of correct answers)
+    - Average completion time (excluding skips)
+    - Last usage timestamp
+
+    Path Parameters:
+        exercise_id: Exercise ID to retrieve
+
+    Returns:
+        Complete exercise with statistics (stats may be None if never attempted)
+
+    Raises:
+        404: Exercise not found
+    """
+    # Get exercise
+    exercise = await get_exercise_or_404(db, exercise_id)
+
+    # Get stats
+    exercise_stats = await get_exercise_stats(db, exercise_id)
+
+    # Combine into response
+    exercise_dict = exercise.__dict__.copy()
+    exercise_dict['stats'] = exercise_stats
+
+    return ExerciseRead.model_validate(exercise_dict)
+
+
+# **GET /admin/exercises/{exercise_id}**
+# Response: ExerciseRead (з статистикою використання)
+#
+# **PATCH /admin/exercises/{exercise_id}**
+# Request: ExerciseUpdate (всі поля optional)
+# Response: ExerciseRead
+#
+# **DELETE /admin/exercises/{exercise_id}**
+# Response: 204 No Content

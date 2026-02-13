@@ -3,18 +3,20 @@ from datetime import date
 from typing import Literal
 
 # Third-party
-from sqlalchemy import or_, select
+from sqlalchemy import or_, select, func, case
 from sqlalchemy.ext.asyncio import AsyncSession
 
 # Models
-from app.models import Exercise
+from app.models import Exercise, UserExerciseHistory
 
 # Schemas
 from app.schemas import (
     ExerciseTypeEnum,
     LanguageLevelEnum,
     LanguageEnum,
-    ExerciseCreate
+    ExerciseStatusEnum,
+    ExerciseCreate,
+    ExerciseStats
 )
 
 async def create_exercise(
@@ -143,3 +145,89 @@ async def get_exercises(
 
     result = await db.execute(stmt)
     return list(result.scalars().all())
+
+
+async def get_exercise_stats(
+        db: AsyncSession,
+        exercise_id: int
+) -> dict | None:
+    """
+    Get exercise usage statistics.
+
+    Aggregates data from user_exercise_history to provide insights
+    about exercise performance, popularity, and difficulty.
+
+    Args:
+        db: Database session
+        exercise_id: Exercise ID to get stats for
+
+    Returns:
+        Dict with statistics or None if exercise never attempted:
+        - total_attempts: Total number of attempts
+        - unique_users: Number of unique users
+        - correct_count: Correct answers count
+        - incorrect_count: Incorrect answers count
+        - skipped_count: Skipped count
+        - accuracy_rate: Percentage of correct answers (0-100)
+        - avg_time_seconds: Average completion time (excluding skips)
+        - last_used_at: Last attempt timestamp
+    """
+    stmt = (
+        select(
+            # Total attempts
+            func.count().label('total_attempts'),
+
+            # Unique users
+            func.count(func.distinct(UserExerciseHistory.user_id)).label('unique_users'),
+
+            # Status breakdown
+            func.sum(
+                case(
+                    (UserExerciseHistory.status == ExerciseStatusEnum.CORRECT, 1), else_=None
+                )
+            ).label('correct_count'),
+            func.sum(
+                case(
+                    (UserExerciseHistory.status == ExerciseStatusEnum.INCORRECT, 1), else_=None
+                )
+            ).label('incorrect_count'),
+            func.sum(
+                case(
+                    (UserExerciseHistory.status == ExerciseStatusEnum.SKIP, 1), else_=None
+                )
+            ).label('skipped_count'),
+
+            # Average time (exclude skipped)
+            func.avg(
+                case(
+                    (UserExerciseHistory.status != ExerciseStatusEnum.SKIP,
+                    UserExerciseHistory.time_spent_seconds),
+                    else_=None
+                )
+            ).label('avg_time_seconds'),
+            # Last usage
+            func.max(UserExerciseHistory.completed_at).label('last_used_at')
+        ).where(
+            UserExerciseHistory.exercise_id == exercise_id
+        )
+    )
+    result = await db.execute(stmt)
+    row = result.one_or_none()
+
+    if row is None or row.total_attempts == 0:
+        return None
+
+    # Calculate accuracy (exclude skipped)
+    answer = row.correct_count + row.incorrect_count
+    accuracy_rate = (row.correct_count / answer) * 100 if answer > 0 else 0
+
+    return {
+        'total_attempts': row.total_attempts,
+        'unique_users': row.unique_users,
+        'correct_count': row.correct_count,
+        'incorrect_count': row.incorrect_count,
+        'skipped_count': row.skipped_count,
+        'accuracy_rate': round(accuracy_rate, 1),
+        'avg_time_seconds': round(row.avg_time_seconds, 1) if row.avg_time_seconds else None,
+        'last_used_at': row.last_used_at
+    }
