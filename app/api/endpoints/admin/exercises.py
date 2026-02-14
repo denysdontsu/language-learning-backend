@@ -20,11 +20,13 @@ from app.schemas import (
     LanguageLevelEnum,
     ExerciseTypeEnum
 )
-from app.utils.db_helpers import get_exercise_or_404
+from app.schemas.exercise import ExerciseReadWithStats
 
 # Utils
 from app.utils.helpers import parse_date_range
 from app.utils.normalizers import normalize_topic
+from app.utils.db_helpers import get_exercise_or_404
+
 
 router = APIRouter(
     prefix='/exercises',
@@ -173,12 +175,12 @@ async def get_exercises_endpoint(
 
 
 @router.get('/{exercise_id}',
-            response_model=ExerciseRead,
+            response_model=ExerciseReadWithStats,
             summary='Get detailed exercise schemas with all fields and statistics')
 async def get_exercise_with_stats_endpoint(
         db: db_dependency,
         exercise_id: int
-) -> ExerciseRead:
+) -> ExerciseReadWithStats:
     """
     Get detailed exercise information with usage statistics.
 
@@ -211,15 +213,4 @@ async def get_exercise_with_stats_endpoint(
     exercise_dict = exercise.__dict__.copy()
     exercise_dict['stats'] = exercise_stats
 
-    return ExerciseRead.model_validate(exercise_dict)
-
-
-# **GET /admin/exercises/{exercise_id}**
-# Response: ExerciseRead (з статистикою використання)
-#
-# **PATCH /admin/exercises/{exercise_id}**
-# Request: ExerciseUpdate (всі поля optional)
-# Response: ExerciseRead
-#
-# **DELETE /admin/exercises/{exercise_id}**
-# Response: 204 No Content
+    return ExerciseReadWithStats.model_validate(exercise_dict)

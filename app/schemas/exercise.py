@@ -557,137 +557,99 @@ class ExerciseStats(BaseModel):
 
 
 class ExerciseRead(ExerciseBrief):
-    """Detailed exercise schema with all fields and statistics (for admin)."""
+    """Schema for exercise response (for admin)."""
     # Metadata
     added_at: datetime
     is_active: bool
+
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            'example':{
+                'id': 1,
+                'topic': 'Past simple verbs',
+                'difficult_level': 'A2',
+                'type': 'multiple_choice',
+                'type_display_name': 'Multiple choice',
+                'options': {
+                    'A': 'go',
+                    'B': 'went',
+                    'C': 'gone',
+                    'D': 'going'
+                },
+                'correct_option_key': 'B',
+                # Question
+                'question_text': 'Yesterday I ___ to the store',
+                'question_language': 'en',
+                'question_language_full_name': 'English',
+                # Answer
+                'correct_answer': 'went',
+                'answer_language': 'en',
+                'answer_language_full_name': 'English',
+                # Translation (optional)
+                'question_translation': 'Вчора я пішов у магазин',
+                'question_translation_language': 'uk',
+                'question_translation_full_name': 'Ukrainian',
+                # Metadata
+                'added_at': '2024-12-20T12:30:00Z',
+                'is_active': True,
+                # Explanation (optional, Phase 2)
+                'explanation': None
+            }
+        }
+    )
+
+
+class ExerciseReadWithStats(ExerciseRead):
+    """Detailed exercise schema with all fields and statistics (for admin)."""
     stats: ExerciseStats | None = Field(None, description='Usage statistics')
 
 
     model_config = ConfigDict(
         from_attributes=True,
         json_schema_extra={
-            'examples': [
-                # Example 1: Translation exercise
-                {
-                    'id': 1,
-                    'topic': 'Present perfect',
-                    'difficult_level': 'B1',
-                    'type': 'sentence_translation',
-                    'type_display_name': 'Sentence translation',
-                    'options': None,
-                    'correct_option_key': None,
-                    # Question
-                    'question_text': 'I have lived here for 5 years',
-                    'question_language': 'en',
-                    'question_language_full_name': 'English',
-                    # Answer
-                    'correct_answer': 'Я живу тут 5 років',
-                    'answer_language': 'uk',
-                    'answer_language_full_name': 'Ukrainian',
-                    # Translation (optional)
-                    'question_translation': None,
-                    'question_translation_language': None,
-                    'question_translation_full_name': None,
-                    # Metadata
-                    'added_at': '2024-12-20T12:30:00Z',
-                    'is_active': True,
-                    # Explanation (optional, Phase 2)
-                    'explanation': None,
-                    # stats
-                    'stats': {
-                        'total_attempts': 248,
-                        'unique_users': 87,
-                        'correct_count': 156,
-                        'incorrect_count': 72,
-                        'skipped_count': 20,
-                        'accuracy_rate': 68.4,
-                        'avg_time_seconds': 12.5,
-                        'last_used_at': '2024-12-20T15:45:00Z'
-                    }
-
+            'example':{
+                'id': 1,
+                'topic': 'Past simple verbs',
+                'difficult_level': 'A2',
+                'type': 'multiple_choice',
+                'type_display_name': 'Multiple choice',
+                'options': {
+                    'A': 'go',
+                    'B': 'went',
+                    'C': 'gone',
+                    'D': 'going'
                 },
-                # Example 2: Multiple choice
-                {
-                    'id': 2,
-                    'topic': 'Past simple verbs',
-                    'difficult_level': 'A2',
-                    'type': 'multiple_choice',
-                    'type_display_name': 'Multiple choice',
-                    'options': {
-                        'A': 'go',
-                        'B': 'went',
-                        'C': 'gone',
-                        'D': 'going'
-                    },
-                    'correct_option_key': 'B',
-                    # Question
-                    'question_text': 'Yesterday I ___ to the store',
-                    'question_language': 'en',
-                    'question_language_full_name': 'English',
-                    # Answer
-                    'correct_answer': 'went',
-                    'answer_language': 'en',
-                    'answer_language_full_name': 'English',
-                    # Translation (optional)
-                    'question_translation': 'Вчора я пішов у магазин',
-                    'question_translation_language': 'uk',
-                    'question_translation_full_name': 'Ukrainian',
-                    # Metadata
-                    'added_at': '2024-12-20T12:30:00Z',
-                    'is_active': True,
-                    # Explanation (optional, Phase 2)
-                    'explanation': None,
-                    # stats
-                    'stats': {
-                        'total_attempts': 248,
-                        'unique_users': 87,
-                        'correct_count': 156,
-                        'incorrect_count': 72,
-                        'skipped_count': 20,
-                        'accuracy_rate': 68.4,
-                        'avg_time_seconds': 12.5,
-                        'last_used_at': '2024-12-20T15:45:00Z'
-                    }
-                },
-                # Example 3: Fill blank
-                {
-                    'id': 3,
-                    'topic': 'Articles',
-                    'difficult_level': 'A1',
-                    'type': 'fill_blank',
-                    'type_display_name': 'Fill in the blank',
-                    'options': None,
-                    'correct_option_key': None,
-                    # Question
-                    'question_text': 'I have ___ apple',
-                    'question_language': 'en',
-                    'question_language_full_name': 'English',
-                    # Answer
-                    'correct_answer': 'an',
-                    'answer_language': 'en',
-                    'answer_language_full_name': 'English',
-                    # Translation (optional)
-                    'question_translation': 'У мене є яблуко',
-                    'question_translation_language': 'uk',
-                    'question_translation_full_name': 'Ukrainian',
-                    # Metadata
-                    'added_at': '2024-12-20T12:30:00Z',
-                    'is_active': True,
-                    # Explanation (optional, Phase 2)
-                    'explanation': None,
-                    # stats
-                    'stats': {
-                        'total_attempts': 248,
-                        'unique_users': 87,
-                        'correct_count': 156,
-                        'incorrect_count': 72,
-                        'skipped_count': 20,
-                        'accuracy_rate': 68.4,
-                        'avg_time_seconds': 12.5,
-                        'last_used_at': '2024-12-20T15:45:00Z'
-                    }
+                'correct_option_key': 'B',
+                # Question
+                'question_text': 'Yesterday I ___ to the store',
+                'question_language': 'en',
+                'question_language_full_name': 'English',
+                # Answer
+                'correct_answer': 'went',
+                'answer_language': 'en',
+                'answer_language_full_name': 'English',
+                # Translation (optional)
+                'question_translation': 'Вчора я пішов у магазин',
+                'question_translation_language': 'uk',
+                'question_translation_full_name': 'Ukrainian',
+                # Metadata
+                'added_at': '2024-12-20T12:30:00Z',
+                'is_active': True,
+                # Explanation (optional, Phase 2)
+                'explanation': None,
+                # stats
+                'stats': {
+                    'total_attempts': 248,
+                    'unique_users': 87,
+                    'correct_count': 156,
+                    'incorrect_count': 72,
+                    'skipped_count': 20,
+                    'accuracy_rate': 68.4,
+                    'avg_time_seconds': 12.5,
+                    'last_used_at': '2024-12-20T15:45:00Z'
                 }
-            ]
+            }
         }
     )
