@@ -17,7 +17,7 @@ from .exercise import (
     ExerciseUserAnswer, ExerciseUpdate, ExerciseQuestion,
     ExerciseRead, ExerciseCreate, ExerciseCorrectAnswer,
     ExerciseBase, ExerciseBriefForHistory, ExerciseStats,
-    ExerciseBrief
+    ExerciseBrief, ExerciseReadWithStats
 )
 from .user_exercise_history import (
     ExerciseHistoryUpdate, ExerciseHistoryRead,
@@ -47,7 +47,7 @@ __all__ = [
     'ExerciseUserAnswer', 'ExerciseUpdate', 'ExerciseQuestion',
     'ExerciseRead', 'ExerciseCreate', 'ExerciseCorrectAnswer',
     'ExerciseBase', 'ExerciseBriefForHistory', 'ExerciseStats',
-    'ExerciseBrief',
+    'ExerciseBrief', 'ExerciseReadWithStats',
 
     # History
     'ExerciseHistoryUpdate', 'ExerciseHistoryRead',
