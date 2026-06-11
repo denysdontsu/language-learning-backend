@@ -148,6 +148,7 @@ class ExerciseUpdate(BaseModel):
     type: ExerciseTypeEnum | None = None
     options: Options | None = None
     explanation: str | None = None
+    is_active: bool | None = None
 
     # Question
     question_text: str | None = Field(None, min_length=1)
@@ -169,6 +170,15 @@ class ExerciseUpdate(BaseModel):
             return None
         return normalize_topic(v)
 
+    @field_validator('is_active', mode='before')
+    @classmethod
+    def validate_is_active(cls, v):
+        if v is None:
+            raise ValueError('is_active must be true or false')
+        if not isinstance(v, bool):
+            raise ValueError('is_active must be boolean')
+        return v
+
     model_config = ConfigDict(
         json_schema_extra={
             'examples': [
@@ -184,7 +194,8 @@ class ExerciseUpdate(BaseModel):
                     'answer_language': None,
                     'question_translation': None,
                     'question_translation_language': None,
-                    'explanation': None
+                    'explanation': None,
+                    'is_active': None
                 },
                 # Example 2: Update question text
                 {
@@ -198,7 +209,8 @@ class ExerciseUpdate(BaseModel):
                     'answer_language': None,
                     'question_translation': None,
                     'question_translation_language': None,
-                    'explanation': None
+                    'explanation': None,
+                    'is_active': None
                 }
             ]
         }
