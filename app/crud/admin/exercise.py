@@ -1,6 +1,6 @@
 # Standard library
 from datetime import date
-from typing import Literal
+from typing import Literal, Any
 
 # Third-party
 from sqlalchemy import or_, select, func, case
@@ -15,8 +15,7 @@ from app.schemas import (
     LanguageLevelEnum,
     LanguageEnum,
     ExerciseStatusEnum,
-    ExerciseCreate,
-    ExerciseStats
+    ExerciseCreate
 )
 
 async def create_exercise(
@@ -231,3 +230,30 @@ async def get_exercise_stats(
         'avg_time_seconds': round(row.avg_time_seconds, 1) if row.avg_time_seconds else None,
         'last_used_at': row.last_used_at
     }
+
+
+async def update_exercise(
+        db: AsyncSession,
+        exercise: Exercise,
+        update_data: dict[str, Any]
+) -> Exercise:
+    """
+    Update exercise fields.
+
+    Updates only fields present in update_data dictionary.
+
+    Args:
+        db: Database session
+        exercise: Exercise object to update
+        update_data: Dictionary with fields to update
+
+    Returns:
+        Exercise: Updated exercise object with refreshed state
+    """
+    # Update only provided fields
+    for field, value in update_data.items():
+        setattr(exercise, field, value)
+
+    await db.commit()
+    await db.refresh(exercise)
+    return exercise

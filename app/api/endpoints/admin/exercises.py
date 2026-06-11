@@ -16,11 +16,15 @@ from app.schemas import (
     ExerciseRead,
     ExerciseCreate,
     ExerciseBriefForHistory,
+    ExerciseReadWithStats,
+    ExerciseUpdate,
     LanguageEnum,
     LanguageLevelEnum,
     ExerciseTypeEnum
 )
-from app.schemas.exercise import ExerciseReadWithStats
+
+# Services
+from app.services.admin.exercise import update_exercise_service
 
 # Utils
 from app.utils.helpers import parse_date_range
@@ -65,7 +69,7 @@ async def create_exercise_endpoint(
     return ExerciseRead.model_validate(created_exercise)
 
 
-router.get('/',
+@router.get('/',
            response_model=list[ExerciseBriefForHistory],
            summary='Get exercises list with filtering')
 async def get_exercises_endpoint(
@@ -214,3 +218,54 @@ async def get_exercise_with_stats_endpoint(
     exercise_dict['stats'] = exercise_stats
 
     return ExerciseReadWithStats.model_validate(exercise_dict)
+
+
+@router.patch('/{exercise_id}',
+              response_model=ExerciseRead,
+              summary='Update exercise')
+async def update_exercise_endpoint(
+        db: db_dependency,
+        exercise_id: int,
+        data: ExerciseUpdate
+) -> ExerciseRead:
+    """
+    Update exercise fields.
+
+    Admin only. Allows partial updates of exercise data.
+    All fields are optional - only provided fields will be updated.
+
+    Validation rules:
+    - Options required for multiple_choice type
+    - Correct answer must match one of the options (if provided)
+    - Translation pairs must be complete (both text and language)
+    - Translations only allowed for translation exercise types
+    - Topic normalized automatically (lowercase, underscores)
+
+    Path Parameters:
+        exercise_id: Exercise ID to update
+
+    Request Body:
+        ExerciseUpdate with fields to update (all optional):
+        - topic: Exercise topic
+        - difficult_level: CEFR level (A1-C2)
+        - type: Exercise type
+        - question_text: Question content
+        - question_language: Question language
+        - correct_answer: Correct answer
+        - answer_language: Answer language
+        - options: Answer options (for multiple_choice)
+        - question_translation: Translation of question
+        - question_translation_language: Translation language
+        - explanation: Learning hint (optional)
+        - is_active: Active status
+
+    Returns:
+        Updated exercise with all fields
+
+    Raises:
+        404: Exercise not found
+        400: Validation error (invalid options, translations, etc.)
+    """
+    updated_exercise = await update_exercise_service(db, exercise_id, data)
+
+    return ExerciseRead.model_validate(updated_exercise)
