@@ -35,7 +35,7 @@ The project is in early development stage.
 **Authentication required (JWT Bearer token)**
 
 - **GET** `/users/me/` - Get current user profile 
-    - Request: JWT Bearer token (здесь нужен Request? или ничего не указывать)
+    - Request: JWT Bearer token
     - Response: `UserBriefWithLang` (if active language set) or `UserBrief`
     - Returns user profile with learning progress
 
@@ -429,8 +429,8 @@ migrations/                         # Alembic migrations
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/denisdoncu/LanguageProject.git
-cd LanguageProject
+git clone https://github.com/denysdontsu/language-learning-backend.git
+cd language-learning-backend
 ```
 
 ### 2. Install dependencies
