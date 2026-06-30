@@ -23,7 +23,10 @@ from .user_exercise_history import (
     ExerciseHistoryUpdate, ExerciseHistoryRead,
     ExerciseHistoryBrief, ExerciseHistoryCreate, ExerciseHistoryBase
 )
-from .statistics import DifficultyStats, TopicStats, PerformanceResponse, OverviewResponse
+from .statistics import (
+    DifficultyStats, TopicStats, PerformanceResponse, OverviewResponse,
+    AdminUserStatistics, PlatformStatistics
+)
 
 __all__ = [
     # Common & JWT
@@ -55,4 +58,5 @@ __all__ = [
 
     # Statistics
     'DifficultyStats', 'TopicStats', 'PerformanceResponse', 'OverviewResponse',
+    'AdminUserStatistics', 'PlatformStatistics'
 ]

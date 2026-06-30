@@ -5,7 +5,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, field_validator, Field
 
 # Schemas
-from .enums import LanguageLevelEnum
+from . import LanguageLevelEnum, UserBrief
 
 
 class OverviewResponse(BaseModel):
@@ -148,6 +148,107 @@ class PerformanceResponse(BaseModel):
                     }
                 ],
                 'suggested_level': 'B1'
+            }
+        }
+    )
+
+
+class AdminUserStatistics(BaseModel):
+    """Complete user statistics for admin view."""
+    user: UserBrief
+    overview: OverviewResponse
+    performance: PerformanceResponse
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            'example': {
+                'user': {
+                    'id': 1,
+                    'email': 'example@mail.com',
+                    'name': 'Denis',
+                    'username': 'denisD',
+                    'native_language': 'uk',
+                },
+                'overview': {
+                    'total_exercises': 123,
+                    'total_answered': 103,
+                    'accuracy': 70.2,
+                    'total_study_hours': 4.8,
+                    'current_streak_days': 67,
+                    'is_today_completed': True
+                },
+                'performance': {
+                    'by_difficulty': {
+                        'A1': {
+                            'accuracy': 90.3,
+                            'total_answered': 350,
+                            'mastered': True,
+                            'in_progress': False
+                        },
+                        'A2': {
+                            'accuracy': 73.1,
+                            'total_answered': 280,
+                            'mastered': False,
+                            'in_progress': True
+                        }
+                    },
+                    'top_topics': [
+                        {
+                            'name': 'Articles',
+                            'accuracy': 88.8,
+                            'total_answered': 125,
+                            'status': 'mastered'
+                        }
+                    ],
+                    'weak_topics': [
+                        {
+                            'name': 'Prepositions',
+                            'accuracy': 50.0,
+                            'total_answered': 88,
+                            'status': 'needs_practice'
+                        }
+                    ],
+                    'suggested_level': 'B1'
+                }
+            }
+        }
+    )
+
+
+class PlatformStatistics(BaseModel):
+    """Platform-wide statistics overview."""
+    total_users: int = Field(
+        description='Total number of registered users')
+    active_users: int = Field(
+        description='Number of users active in the selected period')
+    total_exercises: int = Field(
+        description='Total number of exercises in the platform')
+    active_exercises: int = Field(
+        description='Number of exercises available (not archived)')
+    avg_accuracy: float = Field(
+        description='Average accuracy percentage across all users')
+    total_attempts: int = Field(
+        description='Total number of exercise attempts across all users')
+    daily_active_users: int = Field(
+        description='Number of users active today')
+
+    @field_validator('avg_accuracy', mode='after')
+    @classmethod
+    def round_fields(cls, v: float) -> float:
+        """Round float fields to 1 decimal place."""
+        return round(v, 1)
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            'example': {
+                'total_users': 5234,
+                'active_users': 3421,
+                'total_exercises': 8932,
+                'active_exercises': 8234,
+                'avg_accuracy': 68.2,
+                'total_attempts': 523421,
+                'daily_active_users': 342
             }
         }
     )
