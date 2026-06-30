@@ -1,4 +1,4 @@
-# # Standard library
+# Standard library
 from typing import Literal
 from datetime import datetime
 
