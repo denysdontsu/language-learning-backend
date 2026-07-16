@@ -12,13 +12,12 @@ class Settings(BaseSettings):
     # Application
     APP_NAME: str = "Language app"
     DESCRIPTION: str = "API for learning English and German with AI-generated exercises"
-    VERSION: str = "0.1.0"
+    VERSION: str = Field(..., description="App version")
     DEBUG: bool = True
     ENVIRONMENT: Literal["development", "production"] = "development"
 
     # Server
-    HOST: str = "0.0.0.0"
-    PORT: int = 8000
+    PORT: int = Field(8000, description="App port")
 
     #CORS
     CORS_ORIGINS: list[str] = ["http://localhost:3000", "http://localhost:8000"]
