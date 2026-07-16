@@ -4,160 +4,64 @@ Backend REST API for an interactive language learning platform with spaced repet
 
 The project is in early development stage.
 
-## 📡 API Endpoints (Implemented)
+## 📡 API Endpoints
+
+Full details available in Swagger UI at `/docs`.
 
 ### Authentication
-
-**Registration:**
-- **POST** `/auth/register` - Simple user registration
-    - Request: `UserCreate` (email, username, name, native_language, password)
-    - Response: `UserBrief` (201 Created)
-    - Validates email/username uniqueness, password strength
-
-- **POST** `/auth/register/complete` - Registration with learning language
-    - Request: `UserCreateWithLanguage` (+ active_learning_language, active_language_level)
-    - Response: `UserBriefWithLang` (201 Created)
-    - Creates user and language entry in single transaction
-
-**Login:**
-- **POST** `/auth/token` - OAuth2 login (for Swagger UI)
-    - Request: Form data (`username` = email, password)
-    - Response: `{"access_token": "...", "token_type": "bearer"}`
-    - Used by Swagger UI "Authorize" button
-
-- **POST** `/auth/login` - JSON login (for frontend)
-    - Request: `UserLogin` (email, password)
-    - Response: `{"access_token": "...", "token_type": "bearer"}`
-    - Returns JWT token for authentication
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| POST | `/auth/register` | Simple user registration | — |
+| POST | `/auth/register/complete` | Registration with learning language | — |
+|--------|----------|-------------|------|
+| POST | `/auth/token` | OAuth2 login (Swagger UI) | — |
+| POST | `/auth/login` | JSON login (frontend) | — |
 
 ### User Management
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/users/me/` | Get current user profile | ✓ |
+| POST | `/users/me/` | Update user profile | ✓ |
+| PATCH | `/users/me/password` | Change password | ✓ |
+|--------|----------|-------------|------|
+| GET | `/users/me/languages` | Get learning languages | ✓ |
+| POST | `/users/me/languages/{language}` | Add or update language | ✓ |
+| DELETE | `/users/me/languages/{language}` | Remove language | ✓ |
 
-**Authentication required (JWT Bearer token)**
+### Exercises
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/exercises/topics` | Get available topics | ✓ |
+| GET | `/exercises/next` | Get next exercise | ✓ |
+| POST | `/exercises/{id}/submit` | Submit answer | ✓ |
 
-- **GET** `/users/me/` - Get current user profile 
-    - Request: JWT Bearer token
-    - Response: `UserBriefWithLang` (if active language set) or `UserBrief`
-    - Returns user profile with learning progress
+### History & Statistics
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/history/` | Exercise history with filters | ✓ |
+| GET | `/history/{id}` | History record detail | ✓ |
+|--------|----------|-------------|------|
+| GET | `/users/me/statistics/` | Overview metrics | ✓ |
+| GET | `/users/me/statistics/performance` | Performance analysis | ✓ |
 
-- **POST** `users/me` - Update user profile
-    - Request: `UserUpdate` (email, username, name, native_language)
-    - Response: `UserBrief`
-    - Returns updated user profile
-
-- **PATCH** `users/me/password` - Change user password
-    - Request: `UserChangePassword` (old_password, new_password)
-    - Response: 204 No content
-    - Rate limit: 5 requests/hour
-
-### User languages
-
-**Authentication required**
-
-- **GET** `/users/me/languages` - Get learning languages
-    - Response: `list[UserLanguageBrief]`
-    - Returns all languages user is learning (may be empty)
-
-- **POST** `/users/me/languages/{language}` - Add or update learning language
-    - Path param: `language` (ISO 639-1 code: en, uk, de)
-    - Request: `UserLanguageLevelUpdate` (level, make_active)
-    - Response: `UserLanguageBrief` (201 Created or 200 OK)
-    - Creates if not exists (defaults to A1) or update existing 
-    - Sets as active if `make_active=True`
-
-- **DELETE** `/users/me/languages/{language}` - Remove learning language
-    - Path param: `language` (ISO 639-1 code: en, uk, de)
-    - Response: 204 No content
-    - Cannot remove language if it's the only language or current active
-
-### Exercise
-
-**Authentication required - Active learning language required**
-
-- **GET** `/exercises/topics` - Get available exercise topics
-    - Response: `list[str]`
-    - Returns topic for exercises matching user's languages pair (bidirectional)
-
-- **GET** `/exercises/next` - Get next practice exercise
-    - Query params:
-        - `topic` (required) - Exercise topic
-        - `difficult_level` (optional) - CEFR level override (A1-C2), defaults to user's level
-        - `exclude_id` (optional) - Exercise ID to skip (prevents immediate repeats)
-    - Response: `ExerciseQuestion`
-    - Returns random exercise with spaced repetition filtering:
-        - Excludes exercises answered correctly in last 14 days
-        - Excludes skipped exercises from last 3 days
-        - Allows immediate retry of incorrect answers
-
-- **POST** `/exercises/{exercise_id}/submit` - Submit exercise answer
-    - Path: `exercise_id` - Exercise to answer
-    - Request: `ExerciseUserAnswer` (user_answer, time_spent_seconds)
-    - Response: `ExerciseCorrectAnswer` (201 Created)
-    - Validates answer (case-insensitive), determines status, saves to history
-    - Returns correct answer and optional explanation
-
-### Exercise History
-
-**Authentication required**
-
-- **GET** `/history/` - Get user exercise history
-    - Query params:
-        - `order` (optional) - Sort order by completion date: `asc` or `desc` (default: `desc`)
-        - `language` (optional) - Filter by practiced language (ISO 639-1: en, uk, de)
-        - `difficult_level` (optional) - Filter by CEFR level (A1-C2)
-        - `status` (optional) - Filter by completion status: `correct`, `incorrect`, `skip`
-        - `period` (optional) - Quick time period: `7d`, `30d`, `3m`, `1y`, `all` (overrides custom dates)
-        - `date_from` (optional) - Filter from date (YYYY-MM-DD, inclusive)
-        - `date_to` (optional) - Filter to date (YYYY-MM-DD, inclusive)
-        - `limit` (optional) - Max records to return (from pagination dependency)
-        - `offset` (optional) - Records to skip (from pagination dependency)
-    - Response: `list[ExerciseHistoryBrief]`
-    - Returns paginated exercise history with filtering options
-    - Date filtering: use predefined `period` OR custom `date_from`/`date_to` range
-    - Language filter matches either question or answer language
-
-- **GET** `/history/{history_id}` - Get exercise history record by ID
-    - Path param: `history_id` - Exercise history record ID
-    - Response: `ExerciseHistoryRead`
-    - Returns detailed history record with full exercise information
-    - Includes correct answer, options, translation, and explanation
-    - Returns 404 if record not found or doesn't belong to authenticated user
-
-### User Statistics
-
-**Authentication required**
-
-- **GET** `/users/me/statistics/` - Get user statistics overview
-    - Query params:
-        - `language` (optional) - Filter by language (ISO 639-1: en, uk, de, null = all languages)
-        - `period` (optional) - Time period: `7d`, `30d`, `3m`, `1y`, `all` (default: `all`)
-    - Response: `OverviewResponse`
-    - Returns aggregated user metrics:
-        - Total exercises completed (including and excluding skipped)
-        - Overall accuracy percentage (from answered exercises only)
-        - Current consecutive days streak
-        - Whether at least one exercise was completed today
-        - Total study time in hours
-    - Without language filter: aggregates across all practiced languages
-    - With language filter: shows statistics for that language only
-
-- **GET** `/users/me/statistics/performance` - Get detailed performance statistics
-    - Query params:
-        - `language` (optional) - Filter by language (ISO 639-1: en, uk, de, null = all languages)
-        - `period` (optional) - Time period: `7d`, `30d`, `3m`, `1y`, `all` (default: `all`)
-    - Response: `PerformanceResponse`
-    - Returns detailed performance metrics:
-        - **by_difficulty**: Accuracy and mastery status per CEFR level (A1-C2)
-        - **top_topics**: Top 5 topics by accuracy
-        - **weak_topics**: Topics needing practice (accuracy < 60%, min 20 exercises)
-        - **suggested_level**: Recommended next difficulty level (only when language specified)
-    - Mastery criteria:
-        - Difficulty level: accuracy ≥ 80% AND total ≥ 100 exercises
-        - Topic status: mastered (85%+), good (70-85%), learning (50-70%), needs_practice (<50%)
-    - Level recommendation criteria:
-        - Comfortable zone: accuracy ≥ 70% AND total ≥ 10 exercises
-        - Ready for next level: accuracy ≥ 80% AND total ≥ 50 exercises
-        - Default: A1 for new learners with insufficient practice
-
+### Admin
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/admin/users/` | Get users list with filters | ✓ Admin |
+| GET | `/admin/users/{user_id}` | Get user details | ✓ Admin |
+| PATCH | `/admin/users/{user_id}` | Update user | ✓ Admin |
+|--------|----------|-------------|------|
+| POST | `/admin/exercises/` | Create exercise | ✓ Admin |
+| GET | `/admin/exercises/` | Get exercises list with filters | ✓ Admin |
+| GET | `/admin/exercises/{exercise_id}` | Get exercise details with stats | ✓ Admin |
+| PATCH | `/admin/exercises/{exercise_id}` | Update exercise | ✓ Admin |
+|--------|----------|-------------|------|
+| GET | `/admin/users/{user_id}/languages/` | Get user languages | ✓ Admin |
+| POST | `/admin/users/{user_id}/languages/{language}` | Add or update user language | ✓ Admin |
+| DELETE | `/admin/users/{user_id}/languages/{language}` | Remove user language | ✓ Admin |
+|--------|----------|-------------|------|
+| GET | `/admin/statistics/` | Platform-wide statistics | ✓ Admin |
+| GET | `/admin/statistics/{user_id}` | Complete user statistics | ✓ Admin |
 ---
 
 ## 🛠️ Tech Stack
@@ -166,7 +70,7 @@ The project is in early development stage.
 - Python 3.11+
 - FastAPI 0.118+
 - SQLAlchemy 2.0 (async)
-- PostgreSQL 14+
+- PostgreSQL 17 - 17.10 # ось тут також змінив з 14+, так наче більш точно
 - Pydantic v2
 
 **Infrastructure:**
@@ -174,70 +78,29 @@ The project is in early development stage.
 - python-jose (JWT tokens)
 - argon2-cffi (password hashing)
 - Poetry (dependency management)
+- Docker & Docker Compose # додав
 
 **Planned:**
 - pytest (unit & integration testing)
-- Docker & Docker Compose
 - CI/CD pipeline
 
 ---
 
-## 🧩 Current Progress
-
 ### ✅ Implemented
 
-- **Database layer:**
-    - SQLAlchemy 2.0 async models with relationships
-    - Alembic migrations (12 revisions)
-    - Database constraints (email format, positive time, translation completeness)
-    - Optimized indexes (partial, composite, unique)
-  
-- **Schema layer:**
-    - Pydantic v2 schemas with validation
-    - Enums for languages, levels, exercise types, exercise status and user role
-    - Business logic validation (password, exercise options, translations, exercise status)
-    - Circular import resolution using TYPE_CHECKING
-  
-- **Core utilities:**
-    - Application configuration (Pydantic Settings)
-    - Async PostgreSQL connection
-    - Security utilities (JWT, password hashing, Argon2)
-    - Dependency injection with FastAPI
-    - Helper functions: enum validation, date range parsing, option key extraction
-    - Normalizers: topic formatting, answer cleanup
-  
-- **CRUD layer:**
-    - Users: create, read by id/email/username, update, active language management
-    - User languages: create, read, update, delete
-    - Exercise: get topics, retrieve by criteria with spaced repetition
-    - Exercise history: create submission records, retrieve with filters and pagination
-  
-- **Services layer:**
-    - Authentication: user registration (simple & with language), login
-    - User management: profile updates, password changes
-    - User languages: add/update learning languages, delete
-    - Exercise: retrieve practice exercises, validate and save submissions
-    - Statistics: overview metrics, performance analysis, difficulty tracking
-    - History: exercise history retrieval with filtering
-  
-- **API endpoints:**
-    - Authentication: `/auth/register`, `/auth/register/complete`, `/auth/login`, `/auth/token`
-    - User: `/users/me`, `/users/me/password`
-    - Languages: `/users/me/languages`, `/users/me/languages/{language}`
-    - Exercises: `/exercises/topics`, `/exercises/next`, `/exercises/{id}/submit`
-    - History: `/history/`, `/history/{history_id}`
-    - Statistics: `/users/me/statistics/`, `/users/me/statistics/performance`
+- **Database:** async SQLAlchemy models, 13 Alembic migrations, DB-level constraints and optimized indexes
+- **Schemas:** Pydantic v2 with validation, enums, business logic validation
+- **Utilities:** JWT & Argon2 security, dependency injection, date range parsing, normalizers
+- **CRUD & Services:** full layered implementation for users, languages, exercises, history, statistics
+- **API:** 20 endpoints across auth, users, exercises, history, statistics and admin panel
+- **Infrastructure:** Docker & Docker Compose with automated migrations and seed data
 
 ### 🟡 In Development
 
-- Admin panel for user and exercise management
-- Bulk exercise import functionality
+- Unit and integration tests (pytest)
 
 ### 🔴 Planned
 
-- Admin panel for exercise management
-- Unit and integration tests (pytest)
-- Docker setup
 - CI/CD pipeline
 - AI-powered exercise generation (V2)
 - Refresh token (V2)
@@ -344,8 +207,14 @@ app/
 │   ├── column_types.py              # Custom SQLAlchemy types
 │   └── connection.py                # Async SQLAlchemy engine
 │
-├── api/                             # Partially implemented
+├── api/
 │   ├── endpoints/
+│   │   ├── admin/
+│   │   │   ├── __init__.py          # Admin router registration
+│   │   │   ├── users.py             # Admin user management
+│   │   │   ├── exercises.py         # Admin exercise management
+│   │   │   ├── languages.py         # Admin language management
+│   │   │   └── statistics.py        # Admin statistics
 │   │   ├── auth.py                  # Authentication endpoints
 │   │   ├── exercises.py             # Exercise practice endpoints
 │   │   ├── users.py                 # User management endpoints
@@ -354,14 +223,21 @@ app/
 │   │   └── user_exercise_history.py # User exercise history endpoints
 │   └── dependencies.py              # Dependency injection
 │
-├── crud/                            # CRUD operations
-│   ├── user.py              
+├── crud/
+│   ├── admin/
+│   │   ├── user.py                  # Admin user queries
+│   │   ├── exercises.py             # Admin exercise queries
+│   │   └── statistics.py            # Admin statistics queries
+│   ├── user.py
 │   ├── user_language.py
 │   ├── exercise.py
 │   └── user_exercise_history.py 
 │
 ├── services/                        # Partially implemented
-│   ├── __init__.py
+│   ├── admin/
+│   │   ├── user.py                  # Admin user logic
+│   │   ├── exercises.py             # Admin exercise logic
+│   │   └── statistics.py            # Admin logic
 │   ├── auth.py                      # Registration & authentication
 │   ├── exercise.py                  # Exercise logic with validation
 │   ├── statistics.py                # Statistics calculation and aggregation logic
@@ -378,7 +254,7 @@ app/
 │
 ├── schemas/                         # Pydantic schemas & Enums
 │   ├── __init__.py
-│   ├── common.py                    # Shared schemas (Options)
+│   ├── common.py                    # Shared schemas
 │   ├── enums.py                     # Application enums
 │   ├── jwt_token.py                 # JWT token schemas
 │   ├── user.py
@@ -412,6 +288,11 @@ migrations/                         # Alembic migrations
 │
 ├── env.py
 └── script.py.mako
+
+seed.py
+Dockerfile
+docker-compose.yml
+.env.example
 ```
 
 **Principles:**
@@ -427,29 +308,72 @@ migrations/                         # Alembic migrations
 
 ## 🚀 Quick Start (for developers)
 
-### 1. Clone the repository
+### Clone the repository
 ```bash
 git clone https://github.com/denysdontsu/language-learning-backend.git
 cd language-learning-backend
 ```
 
-### 2. Install dependencies
+---
 
-Poetry manages virtual environments automatically:
+### 1. Docker Installation (recommended)
+
+Requires Docker and Docker Compose installed.
+
+**1.1 Configure .env**
 ```bash
-poetry install
+cp .env.example .env
 ```
 
-**First time using Poetry?** Install it:
+Fill in `.env`:
+```env
+POSTGRES_USER=postgres_user
+POSTGRES_PASSWORD=password
+POSTGRES_HOST=db
+POSTGRES_PORT=5432
+POSTGRES_DB=postgres_db_name
+SECRET_KEY=your-secret-key-min-32-chars
+VERSION=0.1.0
+```
+
+Note: `POSTGRES_HOST` must be `db` (Docker service name, not `localhost`).
+
+**1.2 Run**
 ```bash
-# Install poetry
+docker compose up --build
+```
+
+On first run automatically:
+- Starts PostgreSQL 17
+- Applies all migrations
+- Seeds the database with sample data
+- Starts the API server
+
+**Access the API:**
+- Swagger UI: http://localhost:8000/docs
+
+**Seed credentials:**
+- Admin: `admin@example.com` / `admin1234`
+- User: `alice@example.com` / `alice1234`
+
+---
+
+### 2. Manual Installation
+
+**2.1 Install Poetry (if not installed)**
+```bash
 pip install poetry
 
 # Verify installation
 poetry --version
 ```
 
-### 3. Configure .env
+**2.2 Install dependencies**
+```bash
+poetry install
+```
+
+**2.3 Configure .env**
 ```bash
 cp .env.example .env
 ```
@@ -464,48 +388,32 @@ POSTGRES_DB=postgres_db_name
 SECRET_KEY=your-secret-key-min-32-chars
 ```
 
-**Generate a secure SECRET_KEY:**
+Generate a secure SECRET_KEY:
 ```bash
-# Python
 python -c "import secrets; print(secrets.token_urlsafe(32))"
-
-# OpenSSL
-openssl rand -hex 32
 ```
 
-### 4. Create database
+**2.4 Create database**
 ```bash
-# PostgreSQL
-createdb language_db
+createdb postgres_db_name
 
 # Or via psql
-psql -U postgres
-CREATE DATABASE language_db;
-\q
+psql -U postgres -c "CREATE DATABASE postgres_db_name;"
 ```
 
-### 5. Apply migrations
+**2.5 Apply migrations**
 ```bash
 poetry run alembic upgrade head
 ```
 
-**Note:** `poetry run` ensures commands execute in Poetry's virtual environment.
-
-### 6. Run the application
-
-Start the FastAPI development server:
+**2.6 Run the application**
 ```bash
 poetry run uvicorn app.main:app --reload
 ```
 
 **Access the API:**
-- API: http://localhost:8000
-- Interactive docs (Swagger): http://localhost:8000/docs
-- Alternative docs (ReDoc): http://localhost:8000/redoc
-
-Use Swagger UI to test endpoints interactively.
-API is in active development and subject to changes.
-
+- Swagger UI: http://localhost:8000/docs
+- ReDoc: http://localhost:8000/redoc
 ---
 
 ## 🗺️ Roadmap
@@ -534,11 +442,10 @@ API is in active development and subject to changes.
 
 ### Phase 3: Admin & Polish
 
-- [ ]  Admin panel
-- [ ]  Filtering & pagination
+- [x]  Admin panel
 - [ ]  Unit tests
 - [ ]  Integration tests
-- [ ]  Docker setup
+- [x]  Docker setup
 - [ ]  CI/CD
 
 ### Phase 4: Advanced (V2)
@@ -566,6 +473,8 @@ GitHub: [@denysdontsu](https://github.com/denysdontsu)
 
 ![PostgreSQL](https://img.shields.io/badge/postgresql-14+-blue)
 
+![Docker](https://img.shields.io/badge/docker-24+-blue)
+
 **Version:** 0.1.0-alpha
 
-**Last updated:** February 2026
+**Last updated:** July 2026
