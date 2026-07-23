@@ -14,13 +14,13 @@ class Settings(BaseSettings):
     DESCRIPTION: str = "API for learning English and German with AI-generated exercises"
     VERSION: str = Field(..., description="App version")
     DEBUG: bool = True
-    ENVIRONMENT: Literal["development", "production"] = "development"
+    ENVIRONMENT: Literal["development", "production", "testing"] = "development"
 
     # Server
     PORT: int = Field(8000, description="App port")
 
     #CORS
-    CORS_ORIGINS: list[str] = ["http://localhost:3000", "http://localhost:8000"]
+    CORS_ORIGINS: list[str] = Field(default=["http://localhost:3000", "http://localhost:8000"])
     ALLOWED_HOSTS: list[str] = []
 
     # Data base PostrgreSQL
@@ -90,6 +90,11 @@ class Settings(BaseSettings):
     def is_production(self) -> bool:
         """Check if running in production mode."""
         return self.ENVIRONMENT == "production"
+
+    @property
+    def is_testing(self) -> bool:
+        """Check if running in testing mode."""
+        return self.ENVIRONMENT == "testing"
 
 @lru_cache()
 def get_settings() -> Settings:
