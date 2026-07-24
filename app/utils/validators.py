@@ -126,9 +126,9 @@ def validate_translation_usage(
             )
 
 
-def validate_string_field(
-        field: str | None,
-        info: ValidationInfo
+def _validate_string_value(
+    field: str | None,
+    field_name: str
 ) -> str | None:
     """
     Validate and sanitize string field.
@@ -138,7 +138,7 @@ def validate_string_field(
 
     Args:
         field: Field value to validate
-        info: Pydantic validation info (contains field_name)
+        field_name: Name of field being validated
 
     Returns:
         str | None: Sanitized field value or None
@@ -154,13 +154,33 @@ def validate_string_field(
 
     # Check if empty after strip
     if not v:
-        raise ValueError(f'{info.field_name} cannot be empty or whitespace only')
+        raise ValueError(f'{field_name} cannot be empty or whitespace only')
 
     # Check reserved values
     if v.lower() in RESERVED_VALUES:
-        raise ValueError(f'{info.field_name} cannot be "{v}" (reserved value)')
+        raise ValueError(f'{field_name} cannot be "{v}" (reserved value)')
 
     return v
+
+
+def validate_string_field(field: str | None, info: ValidationInfo) -> str | None:
+    """
+    Pydantic field validator wrapper for string field sanitization and validation.
+
+    Extracts the field name from Pydantic's `ValidationInfo` and delegates
+    the core validation logic to `_validate_string_value`.
+
+    Args:
+        field: Field value to validate.
+        info: Pydantic validation context containing metadata (e.g., field_name).
+
+    Returns:
+        str | None: Sanitized field value or None.
+
+    Raises:
+        ValueError: If field is empty, whitespace-only, or a reserved value.
+    """
+    return _validate_string_value(field, info.field_name)
 
 
 def validate_exercise_status(
