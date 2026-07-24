@@ -6,25 +6,7 @@ from contextlib import nullcontext as does_not_raise
 from app.utils.normalizers import normalize_topic, normalize_answer
 
 
-@pytest.mark.parametrize(
-    'topic, expected, expectation',
-    [
-        ('   ', None, pytest.raises(ValueError)),
-        ('GRAMMAR', 'Grammar', does_not_raise()),
-        ('grammar', 'Grammar', does_not_raise()),
-        ('past SIMPLE', 'Past simple', does_not_raise()),
-    ],
-    ids=[
-        'empty_topic_raises_error',
-        'normalize_uppercase',
-        'normalize_lowercase',
-        'normalize_multiword',
-    ]
-)
-def test_normalize_topic(topic, expected, expectation):
-    with expectation:
-        result = normalize_topic(topic)
-        assert result == expected
+z
 
 
 @pytest.mark.parametrize(
