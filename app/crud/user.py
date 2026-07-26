@@ -98,7 +98,7 @@ async def create_user(
         active_learning_language_id = None
     )
     db.add(new_user)
-    await db.commit()
+    await db.flush()
     await db.refresh(new_user)
     return new_user
 
@@ -120,7 +120,7 @@ async def create_user_with_language(
     3. Create language entry
     4. Flush to get language.id
     5. Link user.active_learning_language_id to language.id
-    6. Commit transaction
+    6. Refresh user
 
     Args:
         db: Database session
@@ -153,7 +153,6 @@ async def create_user_with_language(
 
     # Link user to active language
     new_user.active_learning_language_id = new_language.id
-    await db.commit()
     await db.refresh(new_user)
     return new_user
 
@@ -179,7 +178,7 @@ async def update_active_language(
         User: Updated user object
     """
     user.active_learning_language_id = language_id
-    await db.commit()
+    await db.flush()
     await db.refresh(user)
     return user
 
@@ -227,6 +226,6 @@ async def update_user(
     for field, value in update_data.items():
         setattr(user, field, value)
 
-    await db.commit()
+    await db.flush()
     await db.refresh(user)
     return user

@@ -44,7 +44,7 @@ async def create_user_history(
         time_spent_seconds=data.time_spent_seconds
     )
     db.add(new_history)
-    await db.commit()
+    await db.flush()
     await db.refresh(new_history)
 
     return new_history

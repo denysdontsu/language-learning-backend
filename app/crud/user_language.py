@@ -68,7 +68,7 @@ async def create_user_language(
         level=level
     )
     db.add(new_user_language)
-    await db.commit()
+    await db.flush()
     await db.refresh(new_user_language)
 
     return new_user_language
@@ -108,7 +108,7 @@ async def update_user_language(
 
     # Update level
     user_language.level = level
-    await db.commit()
+    await db.flush()
     await db.refresh(user_language)
 
     return user_language
@@ -136,4 +136,4 @@ async def delete_learning_language(
         UserLevelLanguage.language == language))
 
     await db.execute(stmt)
-    await db.commit()
+    await db.flush()

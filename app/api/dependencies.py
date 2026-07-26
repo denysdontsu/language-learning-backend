@@ -16,11 +16,21 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """
     Provide async database session for dependency injection.
 
+    Manages transaction lifecycle automatically:
+    - Commits on successful request completion
+    - Rolls back on exception
+
     Yields:
-        AsyncSession: Database session that will be automatically closed
+        AsyncSession: Database session
     """
     async with async_session_maker() as session:
-        yield session
+        try:
+            yield session
+            await session.commit()
+        except Exception:
+            await session.rollback()
+            raise
+
 
 db_dependency = Annotated[AsyncSession, Depends(get_db)]
 """Database session dependency. Use in endpoint signatures."""

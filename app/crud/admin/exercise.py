@@ -53,7 +53,7 @@ async def create_exercise(
         question_translation_language=data.question_translation_language
     )
     db.add(new_exercise)
-    await db.commit()
+    await db.flush()
     await db.refresh(new_exercise)
 
     return new_exercise
@@ -254,6 +254,6 @@ async def update_exercise(
     for field, value in update_data.items():
         setattr(exercise, field, value)
 
-    await db.commit()
+    await db.flush()
     await db.refresh(exercise)
     return exercise
