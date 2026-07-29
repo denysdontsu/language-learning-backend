@@ -30,14 +30,12 @@ class JWTPayload(BaseModel):
     @field_validator('sub')
     @classmethod
     def sub_must_be_positive_numeric(cls, v: str) -> str:
-        """Validate that sub is a numeric string representing positive integer."""
         try:
             sub = int(v)
-            if sub <= 0:
-                raise ValueError("'sub' must be positive")
         except ValueError:
             raise ValueError("'sub' must be a numeric string")
-
+        if sub <= 0:
+            raise ValueError("'sub' must be positive")
         return v
 
 
