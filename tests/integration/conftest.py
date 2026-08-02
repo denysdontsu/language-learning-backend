@@ -1,4 +1,5 @@
 # Third-party
+from typing import Callable
 import pytest
 from httpx import ASGITransport, AsyncClient
 
@@ -11,10 +12,10 @@ from app.db.connection import async_session_maker
 from app.main import app
 
 # Models
-from app.models import User
+from app.models import User, UserLevelLanguage
 
 # Schemas
-from app.schemas import LanguageEnum, UserRoleEnum
+from app.schemas import LanguageEnum, UserRoleEnum, LanguageLevelEnum
 
 
 @pytest.fixture
@@ -60,54 +61,166 @@ def user_data():
 
 
 @pytest.fixture
-async def test_user(db, user_data) -> User:
+def create_user_in_db(db, user_data):
+    """
+    Factory fixture to create test users with optional field overrides.
+
+    Enables flexible user creation with default values that can be customized
+    per test. Uses flush() to keep changes in test transaction for auto-rollback.
+
+    Usage:
+        async def test_example(create_user_in_db):
+            user = await create_user_in_db(email='custom@example.com')
+            user_admin = await create_user_in_db(role=UserRoleEnum.ADMIN)
+
+    Args:
+        db: Test database session
+        user_data: Fixture with base user data
+
+    Returns:
+        Async function that creates and returns User instance
+    """
+    async def _create_user(**overrides) -> User:
+        default = {
+            'is_active': True,
+            'role': UserRoleEnum.USER
+        }
+        data = {**default, **user_data, **overrides}
+
+        user_fields = {k: v for k, v in data.items() if k != 'password'}
+        user = User(
+            **user_fields,
+            hashed_password=hash_password(data['password']),
+        )
+        db.add(user)
+        await db.flush()
+        return user
+
+    return _create_user
+
+
+@pytest.fixture
+async def test_user(create_user_in_db):
     """
     Create regular user directly in database without commit.
 
     Uses flush instead of commit to keep changes within the test
     transaction, allowing automatic rollback after the test.
     """
-    user_fields = {k: v for k, v in user_data.items() if k != 'password'}
-    user = User(
-        **user_fields,
-        hashed_password=hash_password(user_data['password']),
-        role=UserRoleEnum.USER,
-        is_active=True,
-    )
-    db.add(user)
-    await db.flush()
-    return user
+    return await create_user_in_db()
 
 
 @pytest.fixture
-async def auth_headers(test_user) -> dict:
-    """Provide JWT authorization headers for a regular user."""
-    token = create_access_token({'sub': str(test_user.id)})
-    return {'Authorization': f'Bearer {token}'}
-
-
-@pytest.fixture
-async def admin_user(db, user_data) -> User:
+async def test_deactivate_user(create_user_in_db):
     """
-    Create admin user directly in database without commit.
+    Create inactive user for testing access denial scenarios.
+
+    User with is_active=False for testing authentication/authorization
+    that rejects inactive accounts.
+
+    Returns:
+        User: Inactive user in database
+    """
+    return await create_user_in_db(
+        is_active=False
+    )
+
+
+@pytest.fixture
+async def test_admin(create_user_in_db):
+    """
+    Create admin directly in database without commit.
 
     Uses flush instead of commit to keep changes within the test
     transaction, allowing automatic rollback after the test.
     """
-    user_fields = {k: v for k, v in user_data.items() if k != 'password'}
-    user = User(
-        **user_fields,
-        hashed_password=hash_password(user_data['password']),
-        role=UserRoleEnum.ADMIN,
-        is_active=True,
+    return await create_user_in_db(
+        email='admin@example.com',
+        username='adminuser',
+        role=UserRoleEnum.ADMIN
     )
-    db.add(user)
-    await db.flush()
-    return user
+
+
+@pytest.fixture
+def get_auth_headers() -> Callable:
+    """
+    Factory fixture to generate JWT authorization headers for any user.
+
+    Creates Bearer token headers for provided user instance.
+    Includes user role in token payload for admin/user distinction.
+
+    Usage:
+        async def test_example(test_user, test_admin, get_auth_headers):
+            user_headers = get_auth_headers(test_user)
+            admin_headers = get_auth_headers(test_admin)
+
+    Returns:
+        Callable: Function that takes User instance, returns auth header dict
+    """
+    def _create_headers(user) -> dict:
+        token = create_access_token(data={'user_id': user.id, 'role': user.role})
+        return {'Authorization': f'Bearer {token}'}
+
+    return _create_headers
 
 
 @pytest.fixture
 async def admin_headers(admin_user) -> dict:
     """Provide JWT authorization headers for an admin user."""
-    token = create_access_token({'sub': str(admin_user.id)})
+    token = create_access_token(data={'user_id': admin_user.id, 'role': admin_user.role})
     return {'Authorization': f'Bearer {token}'}
+
+
+@pytest.fixture
+async def test_user_learning_language(db, test_user):
+    """
+    Create active learning language for test user.
+
+    Sets up UserLevelLanguage relationship and assigns it as user's
+    active_learning_language. Useful for testing language-dependent
+    functionality and response serialization (UserBriefWithLang).
+
+    Returns:
+        UserLevelLanguage: Active language relationship with B1 level English
+
+    Side effects:
+        - Sets test_user.active_learning_language_id
+        - Refreshes test_user ORM state
+    """
+    user_language = UserLevelLanguage(
+        user_id=test_user.id,
+        language=LanguageEnum.EN,
+        level=LanguageLevelEnum.B1
+    )
+
+    db.add(user_language)
+    await db.flush()
+
+    test_user.active_learning_language_id = user_language.id
+    await db.flush()
+    await db.refresh(test_user)
+
+    return user_language
+
+
+@pytest.fixture
+async def test_other_user(create_user_in_db):
+    """
+    Create second test user for multi-user test scenarios.
+
+    Useful for testing:
+    - Duplicate constraint validation (same email/username)
+    - User isolation (cannot see other user's data)
+    - Comparison scenarios
+
+    Returns:
+        User: Second user with different email/username from test_user
+    """
+    return await create_user_in_db(
+        email='test2@example.com',
+        username='testuser2',
+        name='Test User 2',
+        native_language=LanguageEnum.UK,
+        password='testpass1',
+    )
+
