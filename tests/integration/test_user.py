@@ -51,7 +51,16 @@ class TestGetCurrentUser:
 
         assert response.json()['detail'] == 'User not found'
 
-    async def test_get_deactivated_user_return_401(
+    async def test_get_user_unauthorized_raises_401(
+            self,
+            client
+    ):
+        response = await client.get(
+            url='/users/me/'
+        )
+        assert response.status_code == 401
+
+    async def test_get_deactivated_user_return_403(
             self,
             client,
             get_auth_headers,
@@ -59,8 +68,7 @@ class TestGetCurrentUser:
     ):
         headers = get_auth_headers(test_deactivate_user)
         response = await client.get(url='/users/me/', headers=headers)
-        assert response.status_code == 400
-
+        assert response.status_code == 403
         assert response.json()['detail'] == 'Inactive user'
 
 
@@ -149,6 +157,28 @@ class TestUpdateUserProfile:
         )
         assert response.status_code == 409
         assert response.json()['detail'] == 'Username already taken'
+
+    async def test_update_user_unauthorized_raises_401(
+            self,
+            client
+    ):
+        response = await client.patch(
+            url='/users/me/',
+            json={}
+        )
+        assert response.status_code == 401
+
+    async def test_update_user_deactivated_user_return_403(
+            self,
+            client,
+            get_auth_headers,
+            test_deactivate_user
+    ):
+        headers = get_auth_headers(test_deactivate_user)
+        response = await client.patch(url='/users/me/', headers=headers)
+        assert response.status_code == 403
+
+        assert response.json()['detail'] == 'Inactive user'
 
 
 class TestChangePassword:
@@ -262,3 +292,25 @@ class TestChangePassword:
             json=data
         )
         assert response.status_code == 429
+
+    async def test_change_password_unauthorized_raises_401(
+            self,
+            client
+    ):
+        response = await client.patch(
+            url='/users/me/password',
+            json={}
+        )
+        assert response.status_code == 401
+
+    async def test_change_password_deactivated_user_return_403(
+            self,
+            client,
+            get_auth_headers,
+            test_deactivate_user
+    ):
+        headers = get_auth_headers(test_deactivate_user)
+        response = await client.patch(url='/users/me/password', headers=headers)
+        assert response.status_code == 403
+
+        assert response.json()['detail'] == 'Inactive user'
