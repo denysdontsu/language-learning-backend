@@ -95,11 +95,11 @@ async def get_current_active_user(
         User: Authenticated and active user
 
     Raises:
-        HTTPException: 400 if user account is inactive
+        HTTPException: 403 if user account is inactive
     """
     if not current_user.is_active:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_403_FORBIDDEN,
             detail='Inactive user'
         )
     return current_user
@@ -125,12 +125,12 @@ async def require_active_language(
         User with loaded active_learning_language relationship
 
     Raises:
-        HTTPException: 400 if no active learning language
+        HTTPException: 403 if no active learning language
         HTTPException: 500 if failed to load user data
     """
     if not current_user.active_learning_language_id:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_403_FORBIDDEN,
             detail='User must have at least one active learning language'
         )
 
