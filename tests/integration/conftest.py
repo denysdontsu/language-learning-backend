@@ -12,10 +12,21 @@ from app.db.connection import async_session_maker
 from app.main import app
 
 # Models
-from app.models import User, UserLevelLanguage, Exercise
+from app.models import (
+    User,
+    UserLevelLanguage, 
+    Exercise,
+    UserExerciseHistory
+)
 
 # Schemas
-from app.schemas import LanguageEnum, UserRoleEnum, LanguageLevelEnum, ExerciseTypeEnum
+from app.schemas import (
+    LanguageEnum,
+    UserRoleEnum,
+    LanguageLevelEnum,
+    ExerciseTypeEnum,
+    ExerciseStatusEnum
+)
 
 
 @pytest.fixture
@@ -323,3 +334,60 @@ async def exercises_batch(db) -> list[Exercise]:
 
     await db.flush()
     return exercises
+
+
+@pytest.fixture
+async def user_history(db, test_user, exercise_en_uk) -> list[UserExerciseHistory]:
+    """
+    Create exercise history records for test_user.
+
+    Creates 5 records:
+    - 3 correct answers
+    - 1 incorrect answer
+    - 1 skip
+
+    Used for statistics endpoint testing where known
+    counts and accuracy are needed for assertions.
+    """
+    records = [
+        UserExerciseHistory(
+            user_id=test_user.id,
+            exercise_id=exercise_en_uk.id,
+            status=ExerciseStatusEnum.CORRECT,
+            user_answer=exercise_en_uk.correct_answer,
+            time_spent_seconds=30,
+        ),
+        UserExerciseHistory(
+            user_id=test_user.id,
+            exercise_id=exercise_en_uk.id,
+            status=ExerciseStatusEnum.CORRECT,
+            user_answer=exercise_en_uk.correct_answer,
+            time_spent_seconds=45,
+        ),
+        UserExerciseHistory(
+            user_id=test_user.id,
+            exercise_id=exercise_en_uk.id,
+            status=ExerciseStatusEnum.CORRECT,
+            user_answer=exercise_en_uk.correct_answer,
+            time_spent_seconds=20,
+        ),
+        UserExerciseHistory(
+            user_id=test_user.id,
+            exercise_id=exercise_en_uk.id,
+            status=ExerciseStatusEnum.INCORRECT,
+            user_answer='wrong answer',
+            time_spent_seconds=60,
+        ),
+        UserExerciseHistory(
+            user_id=test_user.id,
+            exercise_id=exercise_en_uk.id,
+            status=ExerciseStatusEnum.SKIP,
+            user_answer=None,
+            time_spent_seconds=5,
+        ),
+    ]
+
+    for record in records:
+        db.add(record)
+    await db.flush()
+    return records
