@@ -12,10 +12,10 @@ from app.db.connection import async_session_maker
 from app.main import app
 
 # Models
-from app.models import User, UserLevelLanguage
+from app.models import User, UserLevelLanguage, Exercise
 
 # Schemas
-from app.schemas import LanguageEnum, UserRoleEnum, LanguageLevelEnum
+from app.schemas import LanguageEnum, UserRoleEnum, LanguageLevelEnum, ExerciseTypeEnum
 
 
 @pytest.fixture
@@ -224,3 +224,102 @@ async def test_other_user(create_user_in_db):
         password='testpass1',
     )
 
+
+@pytest.fixture
+async def exercise_en_uk(db) -> Exercise:
+    """
+    Create a single EN→UK sentence translation exercise.
+
+    Language pair matches test_user (native=UK, active=EN).
+    Use this fixture when you need one known exercise with predictable
+    id, topic, and correct_answer for submit and next endpoint tests.
+    """
+    exercise = Exercise(
+        topic='Grammar',
+        difficult_level=LanguageLevelEnum.B1,
+        type=ExerciseTypeEnum.SENTENCE_TRANSLATION,
+        question_text='She has been studying English for three years.',
+        question_language=LanguageEnum.EN,
+        correct_answer='Вона вивчає англійську вже три роки.',
+        answer_language=LanguageEnum.UK,
+        is_active=True,
+    )
+    db.add(exercise)
+    await db.flush()
+    return exercise
+
+
+@pytest.fixture
+async def exercises_batch(db) -> list[Exercise]:
+    """
+    Create a batch of exercises across different topics and levels.
+
+    Language pair matches test_user (native=UK, active=EN).
+    Use this fixture for topics endpoint tests where multiple
+    distinct topics are needed.
+    """
+    exercises = [
+        Exercise(
+            topic='Grammar',
+            difficult_level=LanguageLevelEnum.B1,
+            type=ExerciseTypeEnum.SENTENCE_TRANSLATION,
+            question_text='She has been studying English for three years.',
+            question_language=LanguageEnum.EN,
+            correct_answer='Вона вивчає англійську вже три роки.',
+            answer_language=LanguageEnum.UK,
+            is_active=True,
+        ),
+        Exercise(
+            topic='Vocabulary',
+            difficult_level=LanguageLevelEnum.A1,
+            type=ExerciseTypeEnum.SENTENCE_TRANSLATION,
+            question_text='The cat is on the table.',
+            question_language=LanguageEnum.EN,
+            correct_answer='Кіт на столі.',
+            answer_language=LanguageEnum.UK,
+            is_active=True,
+        ),
+        Exercise(
+            topic='Prepositions',
+            difficult_level=LanguageLevelEnum.A2,
+            type=ExerciseTypeEnum.FILL_BLANK,
+            question_text='She is sitting ___ the chair.',
+            question_language=LanguageEnum.EN,
+            correct_answer='on',
+            answer_language=LanguageEnum.EN,
+            question_translation='Вона сидить ___ стільці.',
+            question_translation_language=LanguageEnum.UK,
+            is_active=True,
+        ),
+        Exercise(
+            topic='Tenses',
+            difficult_level=LanguageLevelEnum.B1,
+            type=ExerciseTypeEnum.MULTIPLE_CHOICE,
+            question_text='I ___ here for three years.',
+            question_language=LanguageEnum.EN,
+            correct_answer='have been living',
+            answer_language=LanguageEnum.EN,
+            question_translation='Я ___ тут вже три роки.',
+            question_translation_language=LanguageEnum.UK,
+            options={'A': 'live', 'B': 'have been living', 'C': 'lived', 'D': 'am living'},
+            is_active=True,
+        ),
+        Exercise(
+            topic='Articles',
+            difficult_level=LanguageLevelEnum.A1,
+            type=ExerciseTypeEnum.FILL_BLANK,
+            question_text='I have ___ apple.',
+            question_language=LanguageEnum.EN,
+            correct_answer='an',
+            answer_language=LanguageEnum.EN,
+            question_translation='У мене є ___ яблуко.',
+            question_translation_language=LanguageEnum.UK,
+            is_active=True,
+        ),
+    ]
+
+    for exercise in exercises:
+        db.add(exercise)
+
+    await db.flush()
+    return exercises
