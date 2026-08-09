@@ -4,3 +4,9 @@ __pycache__
 .env
 .test.env
 *.pyc
+
+# Coverage reports
+.coverage
+.coverage.*
+htmlcov/
+*.lcov

@@ -20,3 +20,9 @@ venv/
 # Dependency artifacts
 requirements.txt
 requirements-*.txt
+
+# Coverage reports
+.coverage
+.coverage.*
+htmlcov/
+*.lcov
