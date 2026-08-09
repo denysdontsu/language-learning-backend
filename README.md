@@ -1,3 +1,6 @@
+
+Изменить docker-compose c добавлением тестирования?
+
 # 🌍 Language Learning Platform API
 
 Backend REST API for an interactive language learning platform with spaced repetition and progress tracking.
@@ -414,6 +417,51 @@ poetry run uvicorn app.main:app --reload
 **Access the API:**
 - Swagger UI: http://localhost:8000/docs
 - ReDoc: http://localhost:8000/redoc
+
+---
+
+### 3. Running Tests
+
+**3.1 Create test database (first time only)**
+```bash
+createdb language_app_test
+```
+
+**3.2 Configure .test.env**
+```bash
+cp .test.env.example .test.env
+```
+
+Fill in `.test.env`:
+```env
+POSTGRES_USER=postgres_user
+POSTGRES_PASSWORD=password
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+POSTGRES_DB=language_app_test
+SECRET_KEY=your-secret-key-min-32-chars
+ENVIRONMENT=testing
+LOG_LEVEL=WARNING
+```
+
+**3.3 Run tests**
+```bash
+# All tests
+poetry run pytest
+
+# With coverage report
+poetry run pytest --cov=app --cov-report=term-missing
+```
+
+**Current coverage: ~71%**
+
+Test suite includes:
+- Unit tests: enums, validators, normalizers, helpers
+- Integration tests: auth, exercises, statistics endpoints
+
+
+> **Note:** Tests are designed to run locally, not in Docker.
+> Docker setup is for running the application only.
 ---
 
 ## 🗺️ Roadmap
