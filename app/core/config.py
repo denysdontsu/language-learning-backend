@@ -30,6 +30,13 @@ class Settings(BaseSettings):
     POSTGRES_PORT: int = Field(default=5432)
     POSTGRES_DB: str = Field(..., description="PostgreSQL database name")
 
+    # Redis
+    REDIS_HOST: str = Field(default="localhost", description="Redis host")
+    REDIS_PORT: int = Field(default=6379, description="Redis port")
+    REDIS_DB: int = Field(default=0, description="Redis database number")
+    REDIS_PASSWORD: str | None = Field(default=None, description="Redis password (optional)")
+    REDIS_ENABLED: bool = Field(default=True, description="Enable Redis caching")
+
     # Security
     SECRET_KEY: str = Field(..., min_length=32, description="JWT secret key")
     JWT_ALGORITHM: str = 'HS256'
@@ -79,6 +86,13 @@ class Settings(BaseSettings):
             f"postgresql+psycopg2://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
             f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
         )
+
+    @property
+    def redis_url(self) -> str:
+        """Redis connection URL."""
+        if self.REDIS_PASSWORD:
+            return f"redis://:{self.REDIS_PASSWORD}@{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_DB}"
+        return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_DB}"
 
     # Computed properties
     @property

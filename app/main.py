@@ -1,3 +1,6 @@
+# Standard library
+from contextlib import asynccontextmanager
+
 # Third-party
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -9,14 +12,24 @@ from app.api.dependencies import limiter
 
 # App
 from app.api.endpoints import api_router
+from app.cache.cache import cache_manager
 from app.core.config import settings
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    await cache_manager.connect()
+    yield
+    # Shutdown
+    await cache_manager.disconnect()
 
 app = FastAPI(
     title=settings.APP_NAME,
     description=settings.DESCRIPTION,
     version=settings.VERSION,
-    docs_url='/docs' if settings.is_development else None
+    docs_url='/docs' if settings.is_development else None,
+    lifespan=lifespan
 )
 
 # Rate limiting setup
