@@ -2,6 +2,10 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException, status
 
+# Cache
+from app.cache.cache import cache_manager
+from app.cache.keys import TOPICS_CACHE_KEY
+
 # CRUD
 from app.crud.admin.exercise import update_exercise, create_exercise
 
@@ -27,6 +31,9 @@ async def create_exercise_service(
     """
     Create new exercise.
 
+    Invalidates all topics cache entries across all language pairs
+    to ensure new exercise topics appear immediately.
+
     Args:
         db: Database session
         data: Exercise creation data
@@ -36,6 +43,9 @@ async def create_exercise_service(
     """
     new_exercise = await create_exercise(db, data)
     await db.commit()
+
+    # Clear cache
+    await cache_manager.delete_pattern(f'{TOPICS_CACHE_KEY}:*')
 
     return new_exercise
 

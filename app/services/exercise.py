@@ -1,6 +1,16 @@
+# Standard library
+import json
+
 # Third-party
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
+
+# Cache
+from app.cache.cache import cache_manager
+from app.cache.keys import (
+    get_topics_key,
+    TOPICS_TTL,
+)
 
 # Models
 from app.models import User
@@ -34,6 +44,9 @@ async def get_all_topics_service(
     - Questions in native language, answers in learning language
     - Questions in learning language, answers in native language
 
+    Cached per language pair for 1 hour. Cache invalidated when
+    a new exercise is created via admin panel.
+
     Args:
         db: Database session
         user: Current user with active learning language
@@ -41,7 +54,19 @@ async def get_all_topics_service(
     Returns:
         list[str]: Sorted list of available topic names
     """
+    # Check cache
+    cache_key = get_topics_key(
+        user.native_language,
+        user.active_learning_language.language
+    )
+    cached = await cache_manager.get(cache_key)
+    if cached:
+        return json.loads(cached)
+
     data = await get_all_topics(db, user)
+
+    # Save cache
+    await cache_manager.set(cache_key, json.dumps(data), TOPICS_TTL)
 
     return data
 
