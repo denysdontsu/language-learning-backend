@@ -5,10 +5,7 @@ from httpx import ASGITransport, AsyncClient
 
 # APP
 from app.api.dependencies import get_db
-
 from app.core.security import create_access_token, hash_password
-from app.db.connection import async_session_maker
-
 from app.main import app
 
 # Models
@@ -30,16 +27,6 @@ from app.schemas import (
 
 
 @pytest.fixture
-async def db():
-    """
-    Provide test database session with automatic rollback after each test.
-    """
-    async with async_session_maker() as session:
-        yield session
-        await session.rollback()
-
-
-@pytest.fixture()
 async def client(db):
     """
     Provide async HTTP test client with overridden database dependency.
