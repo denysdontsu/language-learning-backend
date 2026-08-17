@@ -125,6 +125,7 @@ EXERCISES = [
 ]
 
 USER_LANGUAGES = [
+    ('admin', LanguageEnum.EN, LanguageLevelEnum.B1),
     ('alice', LanguageEnum.EN, LanguageLevelEnum.B1),
     ('alice', LanguageEnum.DE, LanguageLevelEnum.A2),
     ('bob', LanguageEnum.UK, LanguageLevelEnum.A2),
@@ -212,7 +213,6 @@ async def seed_history(
         for _ in range(HISTORY_PER_USER):
             exercise = random.choice(exercises)
             status = weighted_status()
-            completed_at = random_date(days_back=90)
 
             record = UserExerciseHistory(
                 user_id=user.id,
