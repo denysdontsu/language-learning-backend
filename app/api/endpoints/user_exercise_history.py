@@ -12,12 +12,6 @@ from app.api.dependencies import (
     current_active_user_dependency
 )
 
-# Helpers
-from app.utils.helpers import parse_date_range
-
-# CRUD
-from app.crud.user_exercise_history import get_exercise_history_by_user
-
 # Schemas
 from app.schemas import (
     LanguageLevelEnum,
@@ -28,7 +22,10 @@ from app.schemas import (
 )
 
 # Services
-from app.services.user_exercise_history import get_exercise_history_by_id_service
+from app.services.user_exercise_history import (
+    get_exercise_history_by_id_service,
+    get_exercise_history_by_user_service
+)
 
 router = APIRouter()
 
@@ -76,47 +73,38 @@ async def get_exercise_history(
     """
     Get authenticated user's exercise history with optional filters.
 
-    Returns a paginated list of completed exercises ordered by completion time.
-    Each record includes brief exercise info for list display or overview views.
-
-    Date filtering can be applied using either:
-    - a predefined period (e.g. last 7 days), or
-    - a custom date range via date_from and date_to.
-
-    If both period and custom dates are provided, period takes precedence.
+    Returns paginated history ordered by completion time. Date filtering
+    supports predefined periods or custom date ranges — period takes
+    precedence if both are provided.
 
     Query Parameters:
-        order: Sort by completion date (asc/desc, default: desc)
-        language: Filter by practiced language (matches question or answer)
-        difficult_level: Filter by CEFR level (A1-C2)
-        status: Filter by result (correct, incorrect, skip)
-        period: Quick date range selector (7d, 30d, 3m, 1y, all)
-        date_from: Custom start date for filtering (inclusive)
-        date_to: Custom end date for filtering (inclusive)
-        limit: Max records to return (from pagination dependency)
-        offset: Records to skip (from pagination dependency)
+    - order: Sort by completion date (asc/desc, default: desc)
+    - language: Filter by practiced language (matches question or answer)
+    - difficult_level: Filter by CEFR level (A1-C2)
+    - status: Filter by result (correct, incorrect, skip)
+    - period: Quick date range (7d, 30d, 3m, 1y, all)
+    - date_from: Custom start date (inclusive)
+    - date_to: Custom end date (inclusive)
+    - limit/offset: Pagination (from dependency)
 
     Returns:
-        List of exercise history records with nested exercise data
+    list[ExerciseHistoryBrief]: Paginated history records
     """
     offset, limit = pagination
 
-    # Parse date range
-    date_from, date_to = parse_date_range(period, date_from, date_to)
-
-    result = await get_exercise_history_by_user(
-        db,
-        user.id,
-        language,
-        difficult_level,
-        status,
-        date_from,
-        date_to,
-        order,
-        limit,
-        offset
+    return await get_exercise_history_by_user_service(
+        db=db,
+        user_id=user.id,
+        language=language,
+        difficulty_level=difficult_level,
+        status=status,
+        period=period,
+        date_from=date_from,
+        date_to=date_to,
+        order=order,
+        limit=limit,
+        offset=offset,
     )
-    return [ExerciseHistoryBrief.model_validate(o) for o in result]
 
 
 @router.get('/{history_id}',

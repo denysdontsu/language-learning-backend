@@ -4,9 +4,6 @@ from fastapi import APIRouter, status
 # Dependencies
 from app.api.dependencies import user_active_language_dependency, db_dependency
 
-# CRUD
-from app.crud.exercise import get_all_topics
-
 # Schemas
 from app.schemas import (
     LanguageLevelEnum,
@@ -16,7 +13,11 @@ from app.schemas import (
 )
 
 # Services
-from app.services.exercise import get_exercise_service, check_and_save_submission
+from app.services.exercise import (
+    get_exercise_service,
+    check_and_save_submission,
+    get_all_topics_service
+)
 
 router = APIRouter()
 
@@ -34,7 +35,7 @@ async def get_topics(
     - Questions in native language, answers in learning language
     - Questions in learning language, answers in native language
     """
-    return await get_all_topics(db, user)
+    return await get_all_topics_service(db, user)
 
 
 @router.get('/next',
@@ -109,4 +110,4 @@ async def submit_exercise(
     - incorrect: User answer doesn't match but is not empty
     - skip: User answer is empty or whitespace only
     """
-    return await check_and_save_submission(db, user.id, exercise_id, data)
+    return await check_and_save_submission(db, user, exercise_id, data)

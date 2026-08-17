@@ -100,9 +100,8 @@ async def update_user_profile(
     # Update with error handling
     try:
         result = await update_user(db, user, update_dict)
+        await db.commit()
     except IntegrityError as e:
-        await db.rollback()
-
         # Parse error type
         if 'not null' in str(e).lower():
             raise HTTPException(
@@ -160,3 +159,4 @@ async def change_password(
     # Hash and update password
     hashed_new_password = {'hashed_password': hash_password(password_data.new_password)}
     await update_user(db, user, hashed_new_password)
+    await db.commit()

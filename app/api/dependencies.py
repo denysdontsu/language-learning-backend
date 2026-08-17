@@ -16,9 +16,8 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """
     Provide async database session for dependency injection.
 
-    Manages transaction lifecycle automatically:
-    - Commits on successful request completion
-    - Rolls back on exception
+    Transaction lifecycle is managed by the service layer.
+    Rolls back on unhandled exception to prevent partial writes.
 
     Yields:
         AsyncSession: Database session
@@ -26,7 +25,6 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async with async_session_maker() as session:
         try:
             yield session
-            await session.commit()
         except Exception:
             await session.rollback()
             raise

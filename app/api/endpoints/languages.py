@@ -4,9 +4,6 @@ from fastapi import APIRouter, status
 # Dependencies
 from app.api.dependencies import db_dependency, current_active_user_dependency
 
-# CRUD
-from app.crud.user_language import get_all_user_languages
-
 # Schemas
 from app.schemas import (
     LanguageEnum,
@@ -17,7 +14,8 @@ from app.schemas import (
 # Services
 from app.services.user_language import (
     update_or_create_user_language,
-    delete_user_learning_language
+    delete_user_learning_language,
+    get_all_user_languages_service
 )
 
 router = APIRouter()
@@ -37,7 +35,7 @@ async def get_learning_languages(
     Returns:
         list[UserLanguageBrief]: List of languages with proficiency levels and description (may be empty)
     """
-    languages_orm = await get_all_user_languages(db, user.id)
+    languages_orm = await get_all_user_languages_service(db, user.id)
 
     # Serialize ORM list to Pydantic list
     return [UserLanguageBrief.model_validate(lang) for lang in languages_orm]

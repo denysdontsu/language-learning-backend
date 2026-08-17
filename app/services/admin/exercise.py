@@ -3,21 +3,41 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException, status
 
 # CRUD
-from app.crud.admin.exercise import update_exercise
+from app.crud.admin.exercise import update_exercise, create_exercise
 
 # Model
 from app.models import Exercise
 
 # Schemas
-from app.schemas import ExerciseUpdate
+from app.schemas import ExerciseUpdate, ExerciseCreate
 
 # Utils
+from app.utils.normalizers import normalize_topic
 from app.utils.db_helpers import get_exercise_or_404
 from app.utils.validators import (
     validate_exercise_options,
     validate_question_translation_pair,
     validate_translation_usage
 )
+
+async def create_exercise_service(
+        db: AsyncSession,
+        data: ExerciseCreate
+) -> Exercise:
+    """
+    Create new exercise.
+
+    Args:
+        db: Database session
+        data: Exercise creation data
+
+    Returns:
+        Exercise: Created exercise
+    """
+    new_exercise = await create_exercise(db, data)
+    await db.commit()
+
+    return new_exercise
 
 
 async def update_exercise_service(
@@ -71,8 +91,7 @@ async def update_exercise_service(
 
     # Normalize topic if provided
     if update_dict.get('topic'):
-        from app.utils.normalizers import normalize_topic
-        update_data['topic'] = normalize_topic(update_data['topic'])
+        update_dict['topic'] = normalize_topic(update_dict['topic'])
 
     # Merge with existing data for validation
     merged_data = {
@@ -110,5 +129,6 @@ async def update_exercise_service(
 
     # Update only provided fields
     updated_exercise = await update_exercise(db, exercise, update_dict)
+    await db.commit()
 
     return updated_exercise

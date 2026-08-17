@@ -45,7 +45,7 @@ async def register_user_simple(
             User: Created user
 
         Raises:
-            HTTPException: 409 if email already exists
+            HTTPException: 400 if email already exists
         """
     # Email uniqueness validation
     existing = await get_user_by_email(db, data.email)
@@ -65,6 +65,8 @@ async def register_user_simple(
     hashed_password = hash_password(data.password)
     # Create user
     new_user = await create_user(db, data, hashed_password)
+
+    await db.commit()
 
     return new_user
 
@@ -114,6 +116,8 @@ async def register_user_with_language(
     hashed_password = hash_password(data.password)
     # Create user with language
     new_user = await create_user_with_language(db, data, hashed_password)
+
+    await db.commit()
 
     # Construct response with embedded language
     return UserBriefWithLang(

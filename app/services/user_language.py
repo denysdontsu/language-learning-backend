@@ -25,6 +25,23 @@ from app.schemas import (
 from app.utils.db_helpers import get_user_or_404
 
 
+async def get_all_user_languages_service(
+        db: AsyncSession,
+        user_id: int,
+) -> list[UserLevelLanguage]:
+    """
+    Get all learning languages for a user.
+
+    Args:
+        db: Database session
+        user_id: User ID to fetch languages for
+
+    Returns:
+        list[UserLevelLanguage]: List of user language entries
+    """
+    return await get_all_user_languages(db, user_id)
+
+
 async def update_or_create_user_language(
         db: AsyncSession,
         user_id: int,
@@ -91,6 +108,8 @@ async def update_or_create_user_language(
     if data.make_active or user.active_learning_language_id is None:
         await update_active_language(db, user, result.id)
 
+    await db.commit()
+
     return result
 
 
@@ -143,6 +162,5 @@ async def delete_user_learning_language(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail='Cannot remove active learning language. Set another language as active first.'
         )
-
     await delete_learning_language(db, user.id, language)
-
+    await db.commit()

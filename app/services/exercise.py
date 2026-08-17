@@ -10,7 +10,7 @@ from app.utils.db_helpers import get_exercise_or_404
 from app.utils.normalizers import normalize_topic, normalize_answer
 
 # CRUD
-from app.crud.exercise import get_exercise
+from app.crud.exercise import get_exercise, get_all_topics
 from app.crud.user_exercise_history import create_user_history
 
 # Schemas
@@ -23,6 +23,27 @@ from app.schemas import (
     ExerciseHistoryCreate
 )
 
+async def get_all_topics_service(
+        db: AsyncSession,
+        user: User,
+) -> list[str]:
+    """
+    Get available exercise topics for user's language pair.
+
+    Returns topics where exercises exist in either direction:
+    - Questions in native language, answers in learning language
+    - Questions in learning language, answers in native language
+
+    Args:
+        db: Database session
+        user: Current user with active learning language
+
+    Returns:
+        list[str]: Sorted list of available topic names
+    """
+    data = await get_all_topics(db, user)
+
+    return data
 
 async def get_exercise_service(
         db: AsyncSession,
@@ -87,7 +108,7 @@ async def get_exercise_service(
 
 async def check_and_save_submission(
         db: AsyncSession,
-        user_id: int,
+        user: User,
         exercise_id: int,
         data: ExerciseUserAnswer
 ) -> ExerciseCorrectAnswer:
@@ -99,7 +120,7 @@ async def check_and_save_submission(
 
     Args:
         db: Database session
-        user_id: User ID submitting the answer
+        user: User submitting the answer
         exercise_id: Exercise being answered
         data: User's answer and time spent
 
@@ -128,13 +149,14 @@ async def check_and_save_submission(
 
     # Create history record
     new_history = ExerciseHistoryCreate(
-        user_id=user_id,
+        user_id=user.id,
         exercise_id=exercise_id,
         user_answer=data.user_answer if user_answer_normalized else None,
         status=answer_status,
         time_spent_seconds=data.time_spent_seconds
     )
     await create_user_history(db, new_history)
+    await db.commit()
 
     # Build response
     response_model = ExerciseCorrectAnswer(

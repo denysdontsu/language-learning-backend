@@ -9,7 +9,7 @@ from fastapi import APIRouter, status, Query
 from app.api.dependencies import db_dependency, pagination_dependency
 
 # CRUD
-from app.crud.admin.exercise import create_exercise, get_exercises, get_exercise_stats
+from app.crud.admin.exercise import get_exercises, get_exercise_stats
 
 # Schemas
 from app.schemas import (
@@ -24,7 +24,10 @@ from app.schemas import (
 )
 
 # Services
-from app.services.admin.exercise import update_exercise_service
+from app.services.admin.exercise import (
+    update_exercise_service,
+    create_exercise_service
+)
 
 # Utils
 from app.utils.helpers import parse_date_range
@@ -64,7 +67,7 @@ async def create_exercise_endpoint(
         400: Validation error (invalid options, translation rules)
         403: Non-admin user attempting access
     """
-    created_exercise = await create_exercise(db, data)
+    created_exercise = await create_exercise_service(db, data)
 
     return ExerciseRead.model_validate(created_exercise)
 
