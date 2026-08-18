@@ -1,16 +1,9 @@
-# Standard library
-import json
-
 # Third-party
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 # Cache
-from app.cache.cache import cache_manager
-from app.cache.keys import (
-    get_topics_key,
-    TOPICS_TTL,
-)
+from app.cache import CacheKeys, cache_manager
 
 # Models
 from app.models import User
@@ -55,18 +48,18 @@ async def get_all_topics_service(
         list[str]: Sorted list of available topic names
     """
     # Check cache
-    cache_key = get_topics_key(
+    cache_key = CacheKeys.topics(
         user.native_language,
         user.active_learning_language.language
     )
     cached = await cache_manager.get(cache_key)
     if cached:
-        return json.loads(cached)
+        return cached
 
     data = await get_all_topics(db, user)
 
     # Save cache
-    await cache_manager.set(cache_key, json.dumps(data), TOPICS_TTL)
+    await cache_manager.set(cache_key, data, CacheKeys.TOPICS_TTL)
 
     return data
 

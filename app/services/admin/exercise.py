@@ -3,8 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException, status
 
 # Cache
-from app.cache.cache import cache_manager
-from app.cache.keys import TOPICS_CACHE_KEY
+from app.cache import CacheKeys, cache_manager
 
 # CRUD
 from app.crud.admin.exercise import update_exercise, create_exercise
@@ -45,7 +44,7 @@ async def create_exercise_service(
     await db.commit()
 
     # Clear cache
-    await cache_manager.delete_pattern(f'{TOPICS_CACHE_KEY}:*')
+    await cache_manager.delete_pattern(CacheKeys.topics_pattern())
 
     return new_exercise
 
@@ -140,5 +139,8 @@ async def update_exercise_service(
     # Update only provided fields
     updated_exercise = await update_exercise(db, exercise, update_dict)
     await db.commit()
+
+    # Clear cache
+    await cache_manager.delete_pattern(CacheKeys.topics_pattern())
 
     return updated_exercise

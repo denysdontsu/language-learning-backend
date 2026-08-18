@@ -1,14 +1,21 @@
+# Standard library
+from typing import Literal
+
 # Schemas
 from app.schemas import LanguageEnum
 
 
-TOPICS_TTL = 3600
+class CacheKeys:
+    TOPICS_TTL = 3600
 
-TOPICS_CACHE_KEY = 'exercises:topics'
+    _TOPICS_KEY = 'exercises:topics'
 
-def get_topics_key(
-        native_language: LanguageEnum,
-        active_language: LanguageEnum
-) -> str:
-    """Generate cache key for exercise topics by language pair."""
-    return f'{TOPICS_CACHE_KEY}:{native_language.value}:{active_language.value}'
+    @classmethod
+    def topics(cls, native: LanguageEnum, active: LanguageEnum) -> str:
+        """Exact key for topics cache."""
+        return f'{cls._TOPICS_KEY}:{native.value}:{active.value}'
+
+    @classmethod
+    def topics_pattern(cls) -> str:
+        """Wildcard pattern for topics cache invalidation."""
+        return f'{cls._TOPICS_KEY}:*'

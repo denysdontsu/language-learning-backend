@@ -1,4 +1,10 @@
+# Standard library
+import json
+
+# Redis
 from redis import asyncio as aioredis
+
+# Core
 from app.core.config import settings
 
 
@@ -25,7 +31,12 @@ class CacheManager:
             return None
 
         try:
-            return await self.redis.get(key)
+            value = await self.redis.get(key)
+
+            if value is None:
+                return None
+
+            return json.loads(value)
         except Exception:
             return None
 
@@ -35,7 +46,7 @@ class CacheManager:
             return
 
         try:
-            await self.redis.setex(key, ttl, value)
+            await self.redis.setex(key, ttl, json.dumps(value))
         except Exception:
             pass
 
