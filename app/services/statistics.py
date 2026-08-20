@@ -5,6 +5,9 @@ from typing import Literal, NamedTuple
 # Third-party
 from sqlalchemy.ext.asyncio import AsyncSession
 
+# Cache
+from app.cache import CacheKeys, cache_manager
+
 # Models
 from app.models import UserExerciseHistory
 
@@ -62,6 +65,15 @@ async def get_basic_statistics(
     Returns:
         OverviewResponse statistics with aggregated statistics
     """
+    cache_key = CacheKeys.stats_overview(
+        user_id,
+        language,
+        period
+    )
+    cached = await cache_manager.get(cache_key)
+    if cached:
+        return OverviewResponse.model_validate(cached)
+
     # Calculate date range from period
     date_from, date_to = parse_date_range(
         period=period,
@@ -83,6 +95,12 @@ async def get_basic_statistics(
         order='desc'
     )
     overview = _calculate_overview(history)
+
+    await cache_manager.set(
+        cache_key,
+        OverviewResponse.model_dump(overview),
+        CacheKeys.STATS_OVERVIEW_TTL
+    )
 
     return overview
 
@@ -244,6 +262,15 @@ async def get_performance_statistics(
     Returns:
         PerformanceResponse with difficulty, topic statistics and level recommendation
     """
+    cache_key = CacheKeys.stats_performance(
+        user_id,
+        language,
+        period
+    )
+    cached = await cache_manager.get(cache_key)
+    if cached:
+        return PerformanceResponse.model_validate(cached)
+
     # Calculate date range from period
     date_from, date_to = parse_date_range(
         period=period,
@@ -264,8 +291,15 @@ async def get_performance_statistics(
         offset=0,
         order='desc'
     )
+    performance = _calculate_performance_statistics(history)
 
-    return _calculate_performance_statistics(history)
+    await cache_manager.set(
+        cache_key,
+        PerformanceResponse.model_dump(performance),
+        CacheKeys.STATS_PERFORMANCE_TTL
+    )
+
+    return performance
 
 
 def _calculate_performance_statistics(

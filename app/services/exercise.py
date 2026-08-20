@@ -176,6 +176,27 @@ async def check_and_save_submission(
     await create_user_history(db, new_history)
     await db.commit()
 
+    # Clear overview cache
+    await cache_manager.delete_pattern(
+        CacheKeys.stats_overview_pattern(
+            user.id,
+            user.active_learning_language.language
+        )
+    )
+    await cache_manager.delete_pattern(
+        CacheKeys.stats_overview_pattern(user.id, None)
+    )
+    # Clear performance cache
+    await cache_manager.delete_pattern(
+        CacheKeys.stats_performance_pattern(
+            user.id,
+            user.active_learning_language.language
+        )
+    )
+    await cache_manager.delete_pattern(
+        CacheKeys.stats_performance_pattern(user.id, None)
+    )
+
     # Build response
     response_model = ExerciseCorrectAnswer(
         id=exercise.id,
