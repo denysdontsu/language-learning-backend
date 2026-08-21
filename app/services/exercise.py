@@ -196,6 +196,10 @@ async def check_and_save_submission(
     await cache_manager.delete_pattern(
         CacheKeys.stats_performance_pattern(user.id, None)
     )
+    # Clear platform statistics cache
+    await cache_manager.delete_pattern(
+        CacheKeys.platform_stats_pattern()
+    )
 
     # Build response
     response_model = ExerciseCorrectAnswer(

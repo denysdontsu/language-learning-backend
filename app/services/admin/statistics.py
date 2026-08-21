@@ -5,6 +5,9 @@ from typing import Literal
 # Third-party
 from sqlalchemy.ext.asyncio import AsyncSession
 
+# Cache
+from app.cache import CacheKeys, cache_manager
+
 # CRUD
 from app.crud.admin.statistics import get_platform_statistics_data
 
@@ -118,9 +121,23 @@ async def get_platform_statistics(
     Returns:
         PlatformStatistics with aggregated platform metrics
     """
-    data = await get_platform_statistics_data(db=db, period=period)
-    return _calculate_platform_statistics(data)
+    # Check cache
+    cache_key = CacheKeys.platform_stats(period)
+    cached = await cache_manager.get(cache_key)
+    if cached:
+        return PlatformStatistics.model_validate(cached)
 
+    data = await get_platform_statistics_data(db=db, period=period)
+    platform_stats = _calculate_platform_statistics(data)
+
+    # Save cache
+    await cache_manager.set(
+        cache_key,
+        PlatformStatistics.model_dump(platform_stats),
+        CacheKeys.PLATFORM_STATS_TTL
+    )
+
+    return platform_stats
 
 def _calculate_platform_statistics(data: dict) -> PlatformStatistics:
     """

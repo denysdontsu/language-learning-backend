@@ -65,6 +65,7 @@ async def get_basic_statistics(
     Returns:
         OverviewResponse statistics with aggregated statistics
     """
+    # Check cache
     cache_key = CacheKeys.stats_overview(
         user_id,
         language,
@@ -96,6 +97,7 @@ async def get_basic_statistics(
     )
     overview = _calculate_overview(history)
 
+    # Save cache
     await cache_manager.set(
         cache_key,
         OverviewResponse.model_dump(overview),
@@ -262,6 +264,7 @@ async def get_performance_statistics(
     Returns:
         PerformanceResponse with difficulty, topic statistics and level recommendation
     """
+    # Check cache
     cache_key = CacheKeys.stats_performance(
         user_id,
         language,
@@ -293,6 +296,7 @@ async def get_performance_statistics(
     )
     performance = _calculate_performance_statistics(history)
 
+    # Save cache
     await cache_manager.set(
         cache_key,
         PerformanceResponse.model_dump(performance),

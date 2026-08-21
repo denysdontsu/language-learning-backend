@@ -2,6 +2,9 @@
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+# Cache
+from app.cache import cache_manager, CacheKeys
+
 # Core
 from app.core.security import hash_password, create_access_token, verify_password
 
@@ -65,8 +68,12 @@ async def register_user_simple(
     hashed_password = hash_password(data.password)
     # Create user
     new_user = await create_user(db, data, hashed_password)
-
     await db.commit()
+
+    # Clear cache
+    await cache_manager.delete_pattern(
+        CacheKeys.platform_stats_pattern()
+    )
 
     return new_user
 
@@ -116,8 +123,12 @@ async def register_user_with_language(
     hashed_password = hash_password(data.password)
     # Create user with language
     new_user = await create_user_with_language(db, data, hashed_password)
-
     await db.commit()
+
+    # Clear cache
+    await cache_manager.delete_pattern(
+        CacheKeys.platform_stats_pattern()
+    )
 
     # Construct response with embedded language
     return UserBriefWithLang(

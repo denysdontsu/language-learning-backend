@@ -3,6 +3,9 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException, status
 
+# Cache
+from app.cache import cache_manager, CacheKeys
+
 # Core
 from app.core.security import verify_password, hash_password
 
@@ -101,6 +104,11 @@ async def update_user_profile(
     try:
         result = await update_user(db, user, update_dict)
         await db.commit()
+
+        # Clear cache
+        await cache_manager.delete_pattern(
+            CacheKeys.platform_stats_pattern()
+        )
     except IntegrityError as e:
         # Parse error type
         if 'not null' in str(e).lower():

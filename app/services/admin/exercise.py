@@ -42,6 +42,9 @@ async def create_exercise_service(
 
     # Clear cache
     await cache_manager.delete_pattern(CacheKeys.topics_pattern())
+    await cache_manager.delete_pattern(
+        CacheKeys.platform_stats_pattern()
+    )
 
     return ExerciseRead.model_validate(new_exercise)
 
@@ -141,5 +144,8 @@ async def update_exercise_service(
 
     # Clear cache
     await cache_manager.delete_pattern(CacheKeys.topics_pattern())
+    await cache_manager.delete_pattern(
+        CacheKeys.platform_stats_pattern()
+    )
 
     return ExerciseRead.model_validate(updated_exercise)

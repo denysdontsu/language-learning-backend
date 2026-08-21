@@ -9,10 +9,12 @@ class CacheKeys:
     TOPICS_TTL = 3600
     STATS_OVERVIEW_TTL = 180
     STATS_PERFORMANCE_TTL = 180
+    PLATFORM_STATS_TTL = 600
 
     _TOPICS_KEY = 'exercises:topics'
     _STATS_OVERVIEW_KEY = 'stats:overview'
     _STATS_PERFORMANCE_KEY = 'stats:performance'
+    _PLATFORM_STATS_KEY = 'admin:stats:platform'
 
     @classmethod
     def topics(cls, native: LanguageEnum, active: LanguageEnum) -> str:
@@ -110,3 +112,19 @@ class CacheKeys:
             return f'{cls._STATS_PERFORMANCE_KEY}:{user_id}:{language.value}:*'
         else:
             return f'{cls._STATS_PERFORMANCE_KEY}:{user_id}:all:*'
+
+    @classmethod
+    def platform_stats(cls, period: Literal['7d', '30d', '3m', '1y', 'all'] | None = None) -> str:
+        """
+        Exact key for platform statistics cache.
+
+        Args:
+            period: Time period filter, or None defaults to 'all'
+        """
+        p = period or 'all'
+        return f'{cls._PLATFORM_STATS_KEY}:{p}'
+
+    @classmethod
+    def platform_stats_pattern(cls) -> str:
+        """Wildcard pattern to invalidate all platform statistics cache."""
+        return f'{cls._PLATFORM_STATS_KEY}:*'
