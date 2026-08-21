@@ -8,11 +8,8 @@ from app.cache import CacheKeys, cache_manager
 # CRUD
 from app.crud.admin.exercise import update_exercise, create_exercise
 
-# Model
-from app.models import Exercise
-
 # Schemas
-from app.schemas import ExerciseUpdate, ExerciseCreate
+from app.schemas import ExerciseUpdate, ExerciseCreate, ExerciseRead, Options
 
 # Utils
 from app.utils.normalizers import normalize_topic
@@ -26,7 +23,7 @@ from app.utils.validators import (
 async def create_exercise_service(
         db: AsyncSession,
         data: ExerciseCreate
-) -> Exercise:
+) -> ExerciseRead:
     """
     Create new exercise.
 
@@ -38,7 +35,7 @@ async def create_exercise_service(
         data: Exercise creation data
 
     Returns:
-        Exercise: Created exercise
+        ExerciseRead: Created exercise
     """
     new_exercise = await create_exercise(db, data)
     await db.commit()
@@ -46,14 +43,14 @@ async def create_exercise_service(
     # Clear cache
     await cache_manager.delete_pattern(CacheKeys.topics_pattern())
 
-    return new_exercise
+    return ExerciseRead.model_validate(new_exercise)
 
 
 async def update_exercise_service(
         db: AsyncSession,
         exercise_id: int,
         update_data: ExerciseUpdate
-) -> Exercise:
+) -> ExerciseRead:
     """
     Update exercise with validation.
 
@@ -75,7 +72,7 @@ async def update_exercise_service(
         update_data: Partial update data (all fields optional)
 
     Returns:
-        Updated exercise ORM model
+        Updated exercise pydentic model ExerciseRead
 
     Raises:
         HTTPException 404: Exercise not found
@@ -96,16 +93,18 @@ async def update_exercise_service(
     # Extract only provided fields
     update_dict = update_data.model_dump(exclude_unset=True)
     if not update_dict:
-        return exercise
+        return ExerciseRead.model_validate(exercise)
 
     # Normalize topic if provided
     if update_dict.get('topic'):
         update_dict['topic'] = normalize_topic(update_dict['topic'])
+    raw_options = update_dict.get('options', exercise.options)
+    merged_options = Options.model_validate(raw_options) if raw_options else None
 
     # Merge with existing data for validation
     merged_data = {
         'type': update_dict.get('type', exercise.type),
-        'options': update_dict.get('options', exercise.options),
+        'options': update_dict.get('options', merged_options),
         'correct_answer': update_dict.get('correct_answer', exercise.correct_answer),
         'question_translation': update_dict.get('question_translation', exercise.question_translation),
         'question_translation_language': update_dict.get('question_translation_language', exercise.question_translation_language),
@@ -143,4 +142,4 @@ async def update_exercise_service(
     # Clear cache
     await cache_manager.delete_pattern(CacheKeys.topics_pattern())
 
-    return updated_exercise
+    return ExerciseRead.model_validate(updated_exercise)

@@ -69,7 +69,7 @@ async def create_exercise_endpoint(
     """
     created_exercise = await create_exercise_service(db, data)
 
-    return ExerciseRead.model_validate(created_exercise)
+    return created_exercise
 
 
 @router.get('/',
@@ -271,4 +271,4 @@ async def update_exercise_endpoint(
     """
     updated_exercise = await update_exercise_service(db, exercise_id, data)
 
-    return ExerciseRead.model_validate(updated_exercise)
+    return updated_exercise
